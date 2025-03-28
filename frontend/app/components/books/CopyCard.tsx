@@ -127,4 +127,4 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
       />
     </>
   );
-};
+}; 
