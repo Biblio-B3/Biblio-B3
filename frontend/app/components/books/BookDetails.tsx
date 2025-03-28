@@ -60,7 +60,6 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     };
 
     fetchBookDetails();
-
     return () => {
       isMounted = false;
     };
