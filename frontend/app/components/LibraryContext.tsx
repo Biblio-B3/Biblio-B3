@@ -11,7 +11,7 @@ const LibraryContext = createContext<{
 });
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
-  const [libraryName, setLibraryName] = useState("Biblio");
+  const [libraryName, setLibraryName] = useState("WardenPro Librario");
 
   useEffect(() => {
     const fetchLibraryName = async () => {
