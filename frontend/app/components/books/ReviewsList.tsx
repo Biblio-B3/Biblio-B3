@@ -46,7 +46,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
                 });
                 if (userResponse.ok) {
                   const userData = await userResponse.json();
-
                   return {
                     ...review,
                     user: {
@@ -67,7 +66,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
               };
             })
           );
-
           // Vérifier à nouveau si le composant est monté avant de mettre à jour l'état
           if (isMounted) {
             setReviews(reviewsWithUserInfo);
@@ -86,7 +84,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     };
 
     fetchReviews();
-
     // Fonction de nettoyage pour éviter les mises à jour d'état après démontage
     return () => {
       isMounted = false;
