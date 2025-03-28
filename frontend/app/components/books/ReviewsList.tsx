@@ -115,7 +115,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     };
 
     fetchReviews();
-
     return () => {
       isMounted = false;
     };

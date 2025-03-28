@@ -49,7 +49,6 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     };
 
     fetchCopies();
-
     return () => {
       isMounted = false;
     };
