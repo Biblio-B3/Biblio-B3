@@ -7,7 +7,7 @@ const LibraryContext = createContext<{
   setLibraryName: (name: string) => void;
 }>({
   libraryName: "Biblio",
-  setLibraryName: () => {},
+  setLibraryName: () => { },
 });
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
