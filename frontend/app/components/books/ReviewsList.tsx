@@ -72,7 +72,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
               });
               if (userResponse.ok) {
                 const userData = await userResponse.json();
-                
+
                 return {
                   ...review,
                   user: {
@@ -93,7 +93,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
             };
           })
         );
-        
+
         if (isMounted) {
           setReviews(reviewsWithUserInfo);
           setPagination(data.pagination);
@@ -101,7 +101,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         if (pagination && pagination.totalPages > 0 && currentPage > pagination.totalPages) {
           setCurrentPage(1);
           return;
-        }        
+        }
       } catch (error) {
         if (isMounted) {
           console.error("Erreur lors de la récupération des avis:", error);
@@ -115,7 +115,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     };
 
     fetchReviews();
-    
+
     return () => {
       isMounted = false;
     };
@@ -141,7 +141,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
-          
+
           {pagination && (
             <div className="flex justify-center items-center mt-6 gap-4">
               <Button
