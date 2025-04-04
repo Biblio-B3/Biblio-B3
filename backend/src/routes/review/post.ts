@@ -4,6 +4,7 @@ import { review, insertReviewSchema } from "../../db/schema/review";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
+import z from "zod"
 
 app.post(
     "/reviews",
@@ -21,6 +22,7 @@ app.post(
                 condition: req.body.condition,
                 copy_id: req.body.copy_id,
                 user_id: req.payload.user_id,
+                created_at: new Date(),
             });
             const newReview = await db
                 .insert(review)

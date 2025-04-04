@@ -22,7 +22,7 @@ export const insertHistoricalSchema = createInsertSchema(historical, {
 });
 
 export const selectHistoricalSchema = createSelectSchema(historical, {
-    date_read: (schema) => schema.date_read,
+    date_read: z.coerce.date(),
     book_id: (schema) => schema.book_id,
     user_id: (schema) => schema.user_id,
 });
