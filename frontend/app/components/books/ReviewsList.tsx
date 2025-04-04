@@ -16,10 +16,10 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
   useEffect(() => {
     // Si pas de bookId, ne rien faire
     if (!bookId) return;
-    
+
     // Variable pour suivre si le composant est monté
     let isMounted = true;
-    
+
     const fetchReviews = async () => {
       try {
         setLoading(true);
@@ -28,13 +28,13 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
             auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
-        
+
         // Vérifier si le composant est toujours monté
         if (!isMounted) return;
-        
+
         if (response.ok) {
           const data: Review[] = await response.json();
-          
+          console.log(data);
           // Récupérer les informations des utilisateurs pour chaque avis
           const reviewsWithUserInfo = await Promise.all(
             data.map(async (review) => {
@@ -46,7 +46,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
                 });
                 if (userResponse.ok) {
                   const userData = await userResponse.json();
-                  
+
                   return {
                     ...review,
                     user: {
@@ -67,7 +67,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
               };
             })
           );
-          
+
           // Vérifier à nouveau si le composant est monté avant de mettre à jour l'état
           if (isMounted) {
             setReviews(reviewsWithUserInfo);
@@ -86,7 +86,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     };
 
     fetchReviews();
-    
+
     // Fonction de nettoyage pour éviter les mises à jour d'état après démontage
     return () => {
       isMounted = false;

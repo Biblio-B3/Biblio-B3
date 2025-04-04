@@ -1,84 +1,91 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { BookCard } from "./BookCard";
-import { Button } from "@/components/ui/button";
-import { Book, Pagination } from "./types";
-import { Plus } from "lucide-react";
-import { AddBookDialog } from "./AddBookDialog";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react"
+import { BookCard } from "./BookCard"
+import { Button } from "@/components/ui/button"
+import { Book, Pagination } from "./types"
+import { Plus } from "lucide-react"
+import { AddBookDialog } from "./AddBookDialog"
+import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation"
+import { useSearchParams } from "next/navigation"
+import SearchBar from "./SearchBar"
 
 export const BooksList = () => {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
-  const fetchWithAuth = useApiErrorHandler();
-  const searchParams = useSearchParams();
+  const [books, setBooks] = useState<Book[]>([])
+  const [pagination, setPagination] = useState<Pagination | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false)
+  const fetchWithAuth = useApiErrorHandler()
+  const searchParams = useSearchParams()
 
-  const itemsPerPage = 30;
+  const itemsPerPage = 30
+
+  const fetchBooks = async () => {
+    const isSearching = searchTerm.trim().length > 0
+
+    const url = isSearching
+      ? `/api/books/search/${encodeURIComponent(searchTerm)}?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+      : `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+
+    console.log("📡 URL appelée depuis le frontend :", url)
+
+    try {
+      const response = await fetchWithAuth(url, {
+        headers: {
+          auth_token: `${localStorage.getItem("auth_token")}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setBooks(data.data)
+        setPagination(data.pagination)
+      } else {
+        console.error("Erreur API :", data.message)
+        setBooks([])
+        setPagination(null)
+      }
+    } catch (error) {
+      console.error("Erreur lors du fetch des livres :", error)
+      setBooks([])
+      setPagination(null)
+    }
+  }
 
   useEffect(() => {
-    let isMounted = true;
+    console.log("🔍 Nouveau debouncedSearchTerm :", searchTerm)
+    setCurrentPage(1)
+  }, [searchTerm])
 
-    const fetchBooks = async () => {
-      try {
-        const response = await fetchWithAuth(
-          `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`,
-          {
-            headers: {
-              auth_token: `${localStorage.getItem("auth_token")}`,
-            },
-          }
-        );
-
-        if (!isMounted) return;
-
-        if (response.ok) {
-          const data = await response.json();
-          setBooks(data.data);
-          setPagination(data.pagination);
-        } else {
-          console.error("Erreur lors du fetch des livres :", response.statusText);
-        }
-      } catch (error) {
-        if (isMounted) {
-          console.error("Erreur lors de la récupération des livres :", error);
-        }
-      }
-    };
-
-    // Ne charger les livres que si aucun bookId n'est présent dans l'URL
-    if (!searchParams.get('bookId')) {
-      fetchBooks();
+  useEffect(() => {
+    if (!searchParams.get("bookId")) {
+      fetchBooks()
     }
+  }, [searchTerm, currentPage])
 
-    return () => {
-      isMounted = false;
-    };
-  }, [currentPage, fetchWithAuth, itemsPerPage, searchParams]);
-
-  // Si un bookId est présent dans l'URL, ne pas afficher la liste
-  if (searchParams.get('bookId')) {
-    return null;
-  }
+  if (searchParams.get("bookId")) return null
 
   return (
     <>
       <div className="container mx-auto py-6">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <SearchBar onSearch={setSearchTerm} />
           <Button onClick={() => setIsAddBookDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
           </Button>
         </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {books.map((book) => (
-            <BookCard key={book.id} book={book} />
-          ))}
+          {books.length > 0 ? (
+            books.map((book) => <BookCard key={book.id} book={book} />)
+          ) : (
+            <p className="col-span-full text-center text-gray-500">Aucun livre trouvé.</p>
+          )}
         </div>
 
-        {pagination && (
+        {pagination && pagination.totalPages > 1 && (
           <div className="flex justify-center items-center mt-6 gap-4">
             <Button
               variant="outline"
@@ -106,5 +113,5 @@ export const BooksList = () => {
         onOpenChange={setIsAddBookDialogOpen}
       />
     </>
-  );
-};
+  )
+}
