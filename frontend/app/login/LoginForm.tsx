@@ -57,36 +57,39 @@ export default function LoginForm() {
 
       localStorage.setItem("auth_token", data.token)
       const id = CheckUserId(data.token)
-      const ResUserRole = await fetch(`/api/roles/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "auth_token": data.token,
-        },
-      })
-      console.log(ResUserRole)
-      let dataUserRole;
       try {
-        dataUserRole = await ResUserRole.json()
-      } catch (err) {
-        throw new Error("Réponse invalide du serveur.")
+        const ResUserRole = await fetch(`/api/roles/${id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "auth_token": data.token,
+          },
+        })
+        console.log(ResUserRole)
+        let dataUserRole;
+        try {
+          dataUserRole = await ResUserRole.json()
+        } catch (err) {
+          throw new Error("Réponse invalide du serveur.")
+        }
+
+        if (dataUserRole.roles === "admin") {
+          localStorage.setItem("userRole", "admin")
+          router.push("/reservations")
+        } else {
+          localStorage.setItem("userRole", "user")
+          router.push("/")
+        }
+      } catch (error: any) {
+        console.error("⚠️ Erreur lors de la récupération du rôle :", error.message)
+        setErrorMessage("Erreur lors de la récupération du rôle")
       }
 
       toast({
         title: "Connexion réussie",
         description: "Vous êtes maintenant connecté.",
       })
-      if (dataUserRole.roles === "admin") {
-        localStorage.setItem("userRole", "admin")
-        router.push("/reservations")
-      } else if (dataUserRole.message === "Access denied: Admin only.") {
-        localStorage.setItem("userRole", "user")
-        router.push("/")
-      } else {
-        console.error("⚠️ Erreur de connexion")
-        setErrorMessage("Erreur de connexion")
-      }
-    } catch (error: any) { 
+    } catch (error: any) {
       console.error("⚠️ Erreur de connexion :", error.message)
 
       setErrorMessage(error.message)
