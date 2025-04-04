@@ -98,10 +98,53 @@ export default function SettingsClient() {
         <Label htmlFor="emailNotifications">Activer les notifications par email</Label>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch id="darkMode" checked={darkMode} onCheckedChange={setDarkMode} />
-        <Label htmlFor="darkMode">Mode sombre</Label>
+      <div className="space-y-2">
+        <Label htmlFor="resetPassword">Réinitialiser le mot de passe</Label>
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem("auth_token")
+              if (!token) {
+                throw new Error("Aucun token trouvé")
+              }
+
+              const userId = CheckUserId(token)
+
+              const response = await fetch(`/api/users/${userId}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  "auth_token": token
+                },
+                body: JSON.stringify({ resetPassword: true })
+              })
+
+              if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(errorData.message || "Échec de la réinitialisation du mot de passe")
+              }
+
+              toast({
+                title: "Email envoyé",
+                description: "Un email de réinitialisation de mot de passe a été envoyé à votre adresse email.",
+              })
+
+            } catch (error: any) {
+              console.error("⚠️ Erreur lors de la réinitialisation du mot de passe :", error)
+              toast({
+                title: "Erreur",
+                description: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+                variant: "destructive",
+              })
+            }
+          }}
+          className="w-full"
+        >
+          Réinitialiser le mot de passe
+        </Button>
       </div>
+
 
       <Button onClick={handleSave}>Enregistrer les modifications</Button>
 
