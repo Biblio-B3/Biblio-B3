@@ -6,3 +6,4 @@ import "./get_user_role";
 import "./login";
 import "./logout";
 import "./reset-password";
+import "./reset-password-confirm";
