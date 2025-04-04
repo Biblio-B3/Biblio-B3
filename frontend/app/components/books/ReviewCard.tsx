@@ -29,7 +29,7 @@ export const ReviewCard = ({ review }: ReviewCardProps) => {
       </div>
       <p className="text-gray-700">{review.description}</p>
       <p className="text-sm text-gray-500 mt-2">
-        Par {review.user ? `${review.user.first_name} ${review.user.last_name}`.trim() : 'Utilisateur inconnu'}
+        Par {review.user_first_name && review.user_last_name ? `${review.user_first_name} ${review.user_last_name}`.trim() : 'Utilisateur inconnu'}
       </p>
     </Card>
   );

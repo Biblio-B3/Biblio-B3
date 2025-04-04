@@ -26,14 +26,15 @@ export type Book = {
   
   export type Review = {
     id: number;
-    book_id: number;
-    user_id: number;
     description: string;
     note: number;
-    user?: {
-      first_name: string;
-      last_name: string;
-    };
+    condition: number;
+    copy_id: number;
+    book_id: number;
+    user_id: number;
+    user_first_name: string;
+    user_last_name: string;
+    book_title: string;
   };
   
   export type Pagination = {
