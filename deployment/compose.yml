@@ -1,7 +1,7 @@
 services:
 
   back:
-    image: warden696/node_api_b3:latest
+    image: superknacky/node_api_b3:latest
     container_name: back
     ports:
       - "3000:3000"
@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
 
   front:
-    image: warden696/react_app_b3:latest
+    image: superknackyreact_app_b3:latest
     container_name: front
     ports:
       - "4000:4000"
