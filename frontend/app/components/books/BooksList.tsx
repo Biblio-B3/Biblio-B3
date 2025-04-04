@@ -21,7 +21,7 @@ export const BooksList = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const fetchBooks = async () => {
       try {
         const response = await fetchWithAuth(
@@ -32,9 +32,9 @@ export const BooksList = () => {
             },
           }
         );
-        
+
         if (!isMounted) return;
-        
+
         if (response.ok) {
           const data = await response.json();
           setBooks(data.data);
@@ -48,12 +48,12 @@ export const BooksList = () => {
         }
       }
     };
-    
+
     // Ne charger les livres que si aucun bookId n'est présent dans l'URL
     if (!searchParams.get('bookId')) {
       fetchBooks();
     }
-    
+
     return () => {
       isMounted = false;
     };
@@ -101,7 +101,7 @@ export const BooksList = () => {
         )}
       </div>
 
-      <AddBookDialog 
+      <AddBookDialog
         isOpen={isAddBookDialogOpen}
         onOpenChange={setIsAddBookDialogOpen}
       />
