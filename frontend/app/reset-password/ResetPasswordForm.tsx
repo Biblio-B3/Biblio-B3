@@ -4,14 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 
-interface ResetPasswordFormProps {
-    token: string;
-}
-
-export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
+export default function ResetPasswordForm({ token }: { token: string }) {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [loading, setLoading] = useState(false)
@@ -20,13 +15,17 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (password !== confirmPassword) {
+            toast({
+                variant: "destructive",
+                title: "Erreur",
+                description: "Les mots de passe ne correspondent pas"
+            })
+            return
+        }
+
         setLoading(true)
-
         try {
-            if (password !== confirmPassword) {
-                throw new Error("Les mots de passe ne correspondent pas")
-            }
-
             const response = await fetch("/api/reset-password/confirm", {
                 method: "POST",
                 headers: {
@@ -38,22 +37,35 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 }),
             })
 
+            const data = await response.json()
+
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.message || "Échec de la réinitialisation du mot de passe")
+                if (response.status === 401 || response.status === 400) {
+                    toast({
+                        variant: "destructive",
+                        title: "Erreur",
+                        description: "Le lien de réinitialisation a expiré ou est invalide"
+                    })
+                    setTimeout(() => {
+                        router.push("/login")
+                    }, 2000)
+                    return
+                }
+                throw new Error(data.message || "Erreur lors de la réinitialisation du mot de passe")
             }
 
             toast({
-                title: "Mot de passe réinitialisé",
-                description: "Votre mot de passe a été réinitialisé avec succès.",
+                title: "Succès",
+                description: "Mot de passe réinitialisé avec succès"
             })
-
-            router.push("/login")
-        } catch (error: any) {
+            setTimeout(() => {
+                router.push("/login")
+            }, 2000)
+        } catch (error) {
             toast({
-                title: "Erreur",
-                description: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
                 variant: "destructive",
+                title: "Erreur",
+                description: "Erreur lors de la réinitialisation du mot de passe"
             })
         } finally {
             setLoading(false)
@@ -62,30 +74,26 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                <Label htmlFor="password">Nouveau mot de passe</Label>
+            <div className="space-y-2">
                 <Input
-                    id="password"
                     type="password"
+                    placeholder="Nouveau mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={8}
                 />
             </div>
-            <div>
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+            <div className="space-y-2">
                 <Input
-                    id="confirmPassword"
                     type="password"
+                    placeholder="Confirmer le mot de passe"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    minLength={8}
                 />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Réinitialisation en cours..." : "Réinitialiser le mot de passe"}
+                {loading ? "Réinitialisation..." : "Réinitialiser le mot de passe"}
             </Button>
         </form>
     )
