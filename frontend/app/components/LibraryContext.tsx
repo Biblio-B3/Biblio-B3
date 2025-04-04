@@ -6,12 +6,12 @@ const LibraryContext = createContext<{
   libraryName: string;
   setLibraryName: (name: string) => void;
 }>({
-  libraryName: "Librario",
+  libraryName: "Biblio",
   setLibraryName: () => {},
 });
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
-  const [libraryName, setLibraryName] = useState("Librario");
+  const [libraryName, setLibraryName] = useState("Biblio");
 
   useEffect(() => {
     const fetchLibraryName = async () => {

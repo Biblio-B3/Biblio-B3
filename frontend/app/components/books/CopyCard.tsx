@@ -5,14 +5,16 @@ import { Copy } from "./types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { ReservationDialog } from "./ReservationDialog";
 
 type CopyCardProps = {
   copy: Copy;
   onDelete: (copyId: number) => Promise<void>;
+  onUpdateCopy?: (copyId: number, newState: string) => Promise<void>;
 };
 
-export const CopyCard = ({ copy, onDelete }: CopyCardProps) => {
+export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
 
   const getStateColor = (state: string) => {
@@ -37,13 +39,19 @@ export const CopyCard = ({ copy, onDelete }: CopyCardProps) => {
     <>
       <Card className="p-4">
         <div className="flex justify-between items-start mb-3">
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getStateColor(
-              copy.state
-            )}`}
-          >
-            État: {copy.state}
-          </span>
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs font-medium">Etat</Label>
+            <select
+              value={copy.state}
+              onChange={(e) => onUpdateCopy?.(copy.copy_id, e.target.value)}
+              className="rounded-md border px-2 py-1 text-xs"
+            >
+              <option value="excellent">Excellent</option>
+              <option value="bon">Bon</option>
+              <option value="moyen">Moyen</option>
+              <option value="mauvais">Mauvais</option>
+            </select>
+          </div>
           <div className="flex gap-2">
             {copy.is_reserved && (
               <Badge

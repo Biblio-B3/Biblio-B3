@@ -55,6 +55,34 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     };
   }, [bookId, fetchWithAuth, dataFetched]);
 
+  const handleUpdateCopy = async (copyId: number, newState: string) => {
+    try {
+      const response = await fetch(`/api/copy/${copyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          auth_token: `${localStorage.getItem("auth_token")}`,
+        },
+        body: JSON.stringify({ state: newState }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Erreur lors de la mise à jour.");
+        return;
+      }
+
+      setCopies((prev) =>
+        prev.map((copy) =>
+          copy.copy_id === copyId ? { ...copy, state: newState } : copy
+        )
+      );
+    } catch (error) {
+      console.error("Erreur mise à jour état copie :", error);
+      alert("Erreur réseau lors de la mise à jour.");
+    }
+  };
+
   const handleDeleteCopy = async (copyId: number) => {
     const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette copie ?");
     if (!confirmed) return;
