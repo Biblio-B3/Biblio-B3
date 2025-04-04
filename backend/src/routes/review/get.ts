@@ -5,26 +5,42 @@ import { review, selectReviewSchema } from "../../db/schema/review";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
+import { users } from "../../db/schema/users";
+import { books } from "../../db/schema/book";
 
 app.get(
     "/reviews",
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const allReviews = await db.select().from(review);
-            const validatedReviews = allReviews.map((r) =>
-                selectReviewSchema.parse(r),
-            );
-            if (validatedReviews.length === 0)
+            const allReviews = await db
+                .select({
+                    id: review.id,
+                    description: review.description,
+                    note: review.note,
+                    condition: review.condition,
+                    copy_id: review.copy_id,
+                    book_id: review.book_id,
+                    user_id: review.user_id,
+                    user_first_name: users.first_name,
+                    user_last_name: users.last_name,
+                    book_title: books.title,
+                })
+                .from(review)
+                .innerJoin(users, eq(users.id, review.user_id))
+                .innerJoin(books, eq(books.id, review.book_id));
+
+            if (allReviews.length === 0)
                 throw new AppError("No reviews found.", 404);
-            res.status(200).json(validatedReviews);
+
+            res.status(200).json(allReviews);
         } catch (error) {
             if (error instanceof AppError) return next(error);
             return next(
-                new AppError("Internal error during reviews retrieval", 500),
+                new AppError("Internal error during reviews retrieval", 500, error)
             );
         }
-    },
+    }
 );
 
 app.get(
@@ -34,24 +50,35 @@ app.get(
         try {
             const bookId = parseInt(req.params.id, 10);
             if (isNaN(bookId) || bookId <= 0)
-                throw new AppError("Invalid bookId ID provided.", 400);
+                throw new AppError("Invalid book ID provided.", 400);
 
             const foundReview = await db
-                .select()
+                .select({
+                    id: review.id,
+                    description: review.description,
+                    note: review.note,
+                    condition: review.condition,
+                    copy_id: review.copy_id,
+                    user_id: review.user_id,
+                    book_id: review.book_id,
+                    book_title: books.title,
+                    user_first_name: users.first_name,
+                    user_last_name: users.last_name,
+                })
                 .from(review)
+                .innerJoin(users, eq(users.id, review.user_id))
+                .innerJoin(books, eq(books.id, review.book_id))
                 .where(eq(review.book_id, bookId));
-            const validatedReview = foundReview.map((r) =>
-                selectReviewSchema.parse(r),
-            );
-            if (validatedReview.length === 0)
+
+            if (foundReview.length === 0)
                 throw new AppError("Review not found.", 404);
 
-            res.status(200).json(validatedReview);
+            res.status(200).json(foundReview);
         } catch (error) {
             if (error instanceof AppError) return next(error);
             return next(
-                new AppError("Internal error during review retrieval", 500),
+                new AppError("Internal error during review retrieval", 500, error)
             );
         }
-    },
+    }
 );

@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { copyTracedFiles } from "next/dist/build/utils";
 
 type Book = {
   id: number;
@@ -45,14 +46,15 @@ type Copy = {
 
 type Review = {
   id: number;
-  book_id: number;
-  user_id: number;
   description: string;
   note: number;
-  user?: {
-    first_name: string;
-    last_name: string;
-  };
+  condition: number;
+  copy_id: number;
+  book_id: number;
+  user_id: number;
+  user_first_name: string;
+  user_last_name: string;
+  book_title: string;
 };
 
 type Pagination = {
@@ -100,6 +102,33 @@ export default function BooksClient() {
   const [manualQuantity, setManualQuantity] = useState<number>(1);
   const [copyStates, setCopyStates] = useState<string[]>([]);
 
+  const handleUpdateCopy = async (copyId: number, newState: string) => {
+    try {
+      const response = await fetch(`/api/copy/${copyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          auth_token: `${localStorage.getItem("auth_token")}`,
+        },
+        body: JSON.stringify({ state: newState }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.message || "Erreur lors de la mise à jour.");
+        return;
+      }
+
+      setCopies((prev) =>
+        prev.map((copy) =>
+          copy.copy_id === copyId ? { ...copy, state: newState } : copy
+        )
+      );
+    } catch (error) {
+      console.error("Erreur mise à jour état copie :", error);
+      alert("Erreur réseau lors de la mise à jour.");
+    }
+  };
 
   const handleDeleteCopy = async (copyId: number) => {
     const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette copie ?");
@@ -127,7 +156,6 @@ export default function BooksClient() {
   };
 
   useEffect(() => {
-    // Lorsqu'on change de mode d'import ou la quantité change, on réinitialise le tableau des états
     setCopyStates(Array(manualQuantity).fill("new"));
   }, [manualQuantity, importMode]);
 
@@ -480,13 +508,21 @@ export default function BooksClient() {
             {copies.map((copy) => (
               <Card key={copy.copy_id} className="p-4">
                 <div className="flex justify-between items-start mb-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStateColor(
-                      copy.state
-                    )}`}
-                  >
-                    État: {copy.state}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs font-medium">Etat</Label>
+                    <select
+                      value={copy.state}
+                      onChange={(e) =>
+                        handleUpdateCopy(copy.copy_id, e.target.value)
+                      }
+                      className="rounded-md border px-2 py-1 text-xs"
+                    >
+                      <option value="excellent">Excellent</option>
+                      <option value="bon">Bon</option>
+                      <option value="moyen">Moyen</option>
+                      <option value="mauvais">Mauvais</option>
+                    </select>
+                  </div>
                   <div className="flex gap-2">
                     {copy.is_reserved && (
                       <Badge
@@ -590,7 +626,7 @@ export default function BooksClient() {
                   </div>
                   <p className="text-gray-700">{review.description}</p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Par {review.user ? `${review.user.first_name} ${review.user.last_name}`.trim() : 'Utilisateur inconnu'}
+                    Par {review.user_id ? `${review.user_first_name} ${review.user_last_name}`.trim() : 'Utilisateur inconnu'}
                   </p>
                 </Card>
               ))}
