@@ -3,16 +3,26 @@
 import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Review = {
   id: number;
   description: string;
   note: number;
-  book_id: number;
   condition: number;
   copy_id: number;
+  book_id: number;
   user_id: number;
+  user_first_name: string;
+  user_last_name: string;
+  book_title: string;
 };
 
 export default function ReviewsClient() {
@@ -25,11 +35,12 @@ export default function ReviewsClient() {
         const response = await fetch("/api/reviews", {
           method: "GET",
           headers: {
-            "auth_token": `${localStorage.getItem("auth_token")}`,
+            auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
 
-        if (!response.ok) throw new Error("Erreur lors de la récupération des évaluations");
+        if (!response.ok)
+          throw new Error("Erreur lors de la récupération des évaluations");
 
         const data: Review[] = await response.json();
         setReviews(data);
@@ -46,13 +57,16 @@ export default function ReviewsClient() {
       const response = await fetch(`/api/reviews/${id}`, {
         method: "DELETE",
         headers: {
-          "auth_token": `${localStorage.getItem("auth_token")}`,
+          auth_token: `${localStorage.getItem("auth_token")}`,
         },
       });
 
-      if (!response.ok) throw new Error("Erreur lors de la suppression de l'évaluation");
+      if (!response.ok)
+        throw new Error("Erreur lors de la suppression de l'évaluation");
 
-      setReviews((prevReviews) => prevReviews.filter((review) => review.id !== id));
+      setReviews((prevReviews) =>
+        prevReviews.filter((review) => review.id !== id)
+      );
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erreur inconnue");
     }
@@ -65,8 +79,8 @@ export default function ReviewsClient() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID Livre</TableHead>
-            <TableHead>ID Utilisateur</TableHead>
+            <TableHead>Livre</TableHead>
+            <TableHead>Utilisateur</TableHead>
             <TableHead>Note</TableHead>
             <TableHead>Condition</TableHead>
             <TableHead>Commentaire</TableHead>
@@ -76,13 +90,19 @@ export default function ReviewsClient() {
         <TableBody>
           {reviews.map((review) => (
             <TableRow key={review.id}>
-              <TableCell>{review.book_id}</TableCell>
-              <TableCell>{review.user_id}</TableCell>
+              <TableCell>{review.book_title}</TableCell>
+              <TableCell>
+                {review.user_first_name} {review.user_last_name}
+              </TableCell>
               <TableCell>{review.note}</TableCell>
               <TableCell>{review.condition}</TableCell>
               <TableCell>{review.description}</TableCell>
               <TableCell>
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteReview(review.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteReview(review.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TableCell>
