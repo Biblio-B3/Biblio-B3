@@ -25,6 +25,7 @@ app.get(
                     user_first_name: users.first_name,
                     user_last_name: users.last_name,
                     book_title: books.title,
+                    created_at: review.created_at,
                 })
                 .from(review)
                 .innerJoin(users, eq(users.id, review.user_id))
@@ -91,18 +92,18 @@ app.get(
                     book_title: books.title,
                     user_first_name: users.first_name,
                     user_last_name: users.last_name,
+                    created_at: review.created_at,
                 })
                 .from(review)
+                .where(eq(review.book_id, bookId))
                 .innerJoin(users, eq(users.id, review.user_id))
                 .innerJoin(books, eq(books.id, review.book_id))
-                .where(eq(review.book_id, bookId));
-
-            if (foundReview.length === 0)
-                throw new AppError("Review not found.", 404);
-                .where(eq(review.book_id, bookId))
                 .orderBy(desc(review.created_at))
                 .limit(itemsPerPage)
                 .offset(offset);
+
+            if (paginatedReviews.length === 0)
+                throw new AppError("Review not found.", 404);
 
             const validatedReviews = paginatedReviews.map((r) =>
                 selectReviewSchema.parse(r),
