@@ -80,8 +80,25 @@ app.get(
             const offset = (page - 1) * itemsPerPage;
 
             const paginatedReviews = await db
-                .select()
+                .select({
+                    id: review.id,
+                    description: review.description,
+                    note: review.note,
+                    condition: review.condition,
+                    copy_id: review.copy_id,
+                    user_id: review.user_id,
+                    book_id: review.book_id,
+                    book_title: books.title,
+                    user_first_name: users.first_name,
+                    user_last_name: users.last_name,
+                })
                 .from(review)
+                .innerJoin(users, eq(users.id, review.user_id))
+                .innerJoin(books, eq(books.id, review.book_id))
+                .where(eq(review.book_id, bookId));
+
+            if (foundReview.length === 0)
+                throw new AppError("Review not found.", 404);
                 .where(eq(review.book_id, bookId))
                 .orderBy(desc(review.created_at))
                 .limit(itemsPerPage)
@@ -116,5 +133,5 @@ app.get(
                 new AppError("Internal error during review retrieval", 500, error)
             );
         }
-    },
+    }
 );
