@@ -25,7 +25,7 @@ app.put(
             if (!selectedCopy)
                 throw new AppError("Copy not found.", 404, { id: copyId });
 
-            const validatedData = updateCopySchema.parse(req.body.state);
+            const validatedData = updateCopySchema.parse(req.body);
             const [updatedCopy] = await db
                 .update(copy)
                 .set(validatedData)
@@ -70,7 +70,7 @@ app.put(
                 throw new AppError("Reservation not found for this copy.", 404, {
                     id: copyId,
                 });
-            
+
             const [selectedCopy] = await db
                 .select({ is_claimed: copy.is_claimed })
                 .from(copy)
@@ -87,21 +87,21 @@ app.put(
 
             const [updatedCopy, newHistorical] = await db.transaction(async (trx) => {
                 const [updatedCopy] = await trx
-                .update(copy)
-                .set({ is_claimed: true })
-                .where(eq(copy.id, copyId))
-                .returning();
-            if (!updatedCopy)
-                throw new AppError("Copy not found or already claimed.", 404, {
-                    id: copyId,
-                });
-            
-            const [newHistorical] = await trx.insert(historical).values({
-                user_id: userReservation.user_id,
-                book_id: updatedCopy.book_id,
-                date_read: new Date(),
-            }).returning();
-            if (!newHistorical)
+                    .update(copy)
+                    .set({ is_claimed: true })
+                    .where(eq(copy.id, copyId))
+                    .returning();
+                if (!updatedCopy)
+                    throw new AppError("Copy not found or already claimed.", 404, {
+                        id: copyId,
+                    });
+
+                const [newHistorical] = await trx.insert(historical).values({
+                    user_id: userReservation.user_id,
+                    book_id: updatedCopy.book_id,
+                    date_read: new Date(),
+                }).returning();
+                if (!newHistorical)
                     throw new AppError("Error while adding to historical.", 500);
 
                 return [newHistorical, updatedCopy];
