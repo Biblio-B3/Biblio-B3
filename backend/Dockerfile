@@ -9,11 +9,11 @@ RUN corepack enable
 COPY src ./src
 
 RUN yarn config set nodeLinker node-modules \
-    && yarn install \
+    && yarn install --production \
     && yarn drizzle-kit generate \
     && yarn build
 
-RUN yarn workspaces focus --all --production
+#RUN yarn workspaces focus --all --production
     
 FROM gcr.io/distroless/nodejs22-debian12:nonroot
     

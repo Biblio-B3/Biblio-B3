@@ -2,7 +2,7 @@ services:
 
   back:
     image: superknacky/node_api_b3:latest
-    container_name: back
+    container_name: Biblio-back
     ports:
       - "3000:3000"
     environment:
@@ -10,11 +10,17 @@ services:
 
   front:
     image: superknacky/react_app_b3:latest
-    container_name: front
+    container_name: Biblio-front
     ports:
       - "4000:4000"
     environment:
       - NODE_ENV=production
+
+  reverse-proxy:
+    image: nginx:stable-alpine
+    container_name: Biblio-nginx
+    ports:
+      - "80:80"
 
   db:
     image: postgres:14.15-alpine3.21
