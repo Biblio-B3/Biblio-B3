@@ -8,6 +8,12 @@ type ReviewCardProps = {
 };
 
 export const ReviewCard = ({ review }: ReviewCardProps) => {
+  const formattedDate = new Date(review.created_at).toLocaleDateString("fr-FR", {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   return (
     <Card className="p-4">
       <div className="flex items-center mb-2">
@@ -30,6 +36,9 @@ export const ReviewCard = ({ review }: ReviewCardProps) => {
       <p className="text-gray-700">{review.description}</p>
       <p className="text-sm text-gray-500 mt-2">
         Par {review.user_first_name && review.user_last_name ? `${review.user_first_name} ${review.user_last_name}`.trim() : 'Utilisateur inconnu'}
+      </p>
+      <p className="text-sm text-gray-500 mt-2">
+        Créé le {formattedDate}
       </p>
     </Card>
   );
