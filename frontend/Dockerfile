@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package.json  ./
 
-RUN yarn install
+RUN yarn install --production
 
 COPY . .
 
@@ -22,5 +22,4 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 EXPOSE 4000
-
 CMD ["server.js"]
