@@ -6,10 +6,9 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -24,11 +23,16 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    - name: Create Docker Cloud Builder
+      run: |
+        docker buildx create --driver cloud superknacky/builder --name mycloudbuilder --use
+
     - name: Generate version from commit count
       id: version
       run: |
         VERSION=$(git rev-list --count HEAD)
         echo "VERSION=1.${VERSION}" >> $GITHUB_ENV
+
     - name: Get the current timestamp
       id: timestamp
       run: echo "TIMESTAMP=$(date +'%Y%m%d%H')" >> $GITHUB_ENV
@@ -36,6 +40,7 @@ jobs:
     - name: Build Node.js API image
       run: |
         docker buildx build \
+          --builder mycloudbuilder \
           --platform linux/amd64,linux/arm64 \
           --file backend/Dockerfile \
           --tag ${{ secrets.DOCKER_USERNAME }}/node_api_b3:${{ env.TIMESTAMP }}-v${{ env.VERSION }} \
@@ -46,10 +51,10 @@ jobs:
     - name: Build Next.js front image
       run: |
         docker buildx build \
+          --builder mycloudbuilder \
           --platform linux/amd64,linux/arm64 \
           --file frontend/Dockerfile \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:${{ env.TIMESTAMP }}-v${{ env.VERSION }} \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:latest \
           --push \
           frontend/
-
