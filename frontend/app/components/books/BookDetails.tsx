@@ -27,9 +27,9 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
   useEffect(() => {
     if (!bookId || dataFetched) return;
-    
+
     let isMounted = true;
-    
+
     const fetchBookDetails = async () => {
       try {
         setLoading(true);
@@ -38,9 +38,9 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
             auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
-        
+
         if (!isMounted) return;
-        
+
         if (bookResponse.ok) {
           const bookData = await bookResponse.json();
           setBook(bookData);
@@ -60,7 +60,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     };
 
     fetchBookDetails();
-    
+
     return () => {
       isMounted = false;
     };
