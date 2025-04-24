@@ -18,9 +18,9 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
 
   useEffect(() => {
     if (!bookId || dataFetched) return;
-    
+
     let isMounted = true;
-    
+
     const fetchCopies = async () => {
       try {
         setLoading(true);
@@ -29,9 +29,9 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
             auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
-        
+
         if (!isMounted) return;
-        
+
         if (response.ok) {
           const data: Copy[] = await response.json();
           setCopies(data);
@@ -49,7 +49,7 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     };
 
     fetchCopies();
-    
+
     return () => {
       isMounted = false;
     };

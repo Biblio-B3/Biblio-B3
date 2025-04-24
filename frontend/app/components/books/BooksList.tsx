@@ -15,17 +15,32 @@ export const BooksList = () => {
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm)
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false)
   const fetchWithAuth = useApiErrorHandler()
   const searchParams = useSearchParams()
 
   const itemsPerPage = 30
 
+  // Met à jour debouncedSearchTerm après 0.5s sans frappe
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500)
+
+    return () => clearTimeout(handler)
+  }, [searchTerm])
+
+  // Réinitialise la page à 1 quand le terme change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
   const fetchBooks = async () => {
-    const isSearching = searchTerm.trim().length > 0
+    const isSearching = debouncedSearchTerm.trim().length > 0
 
     const url = isSearching
-      ? `/api/books/search/${encodeURIComponent(searchTerm)}?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+      ? `/api/books/search/${encodeURIComponent(debouncedSearchTerm)}?page=${currentPage}&itemsPerPage=${itemsPerPage}`
       : `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`
 
     console.log("📡 URL appelée depuis le frontend :", url)
@@ -55,15 +70,12 @@ export const BooksList = () => {
   }
 
   useEffect(() => {
-    console.log("🔍 Nouveau debouncedSearchTerm :", searchTerm)
-    setCurrentPage(1)
-  }, [searchTerm])
-
-  useEffect(() => {
     if (!searchParams.get("bookId")) {
       fetchBooks()
+      document.body.scrollTo({ top: 0, behavior: "smooth" })
     }
-  }, [searchTerm, currentPage])
+  }, [debouncedSearchTerm, currentPage])
+
 
   if (searchParams.get("bookId")) return null
 
