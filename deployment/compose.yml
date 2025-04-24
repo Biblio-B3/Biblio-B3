@@ -9,7 +9,7 @@ services:
       - NODE_ENV=production
 
   front:
-    image: superknackyreact_app_b3:latest
+    image: superknacky/react_app_b3:latest
     container_name: front
     ports:
       - "4000:4000"
