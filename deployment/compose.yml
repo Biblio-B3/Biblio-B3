@@ -16,7 +16,7 @@ services:
     environment:
       - NODE_ENV=production
 
-  reverse-proxy:
+  nginx:
     image: nginx:stable-alpine
     container_name: Biblio-nginx
     ports:
@@ -24,7 +24,7 @@ services:
 
   db:
     image: postgres:14.15-alpine3.21
-    container_name: postgres
+    container_name: Biblia-postgres
     restart: always
     environment:
       POSTGRES_DB: Librario
@@ -37,7 +37,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: pgadmin
+    container_name: Biblio-pgadmin
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
