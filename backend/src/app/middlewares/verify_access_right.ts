@@ -42,15 +42,19 @@ export function grantedAccessMiddleware(
 
             let resource = null;
             if (schema === users) {
-                [resource] = await db
+                resource = await db
                     .select({ user_id: schema.id })
                     .from(schema)
                     .where(eq(schema.id, resourceId));
             } else {
-                [resource] = await db
+                console.log("ressourceId", resourceId);
+
+                resource = await db
                     .select({ user_id: schema.user_id })
                     .from(schema)
                     .where(eq(schema.user_id, resourceId));
+
+                console.log("resource ", resource[0].user_id)
             }
 
             if (!resource)
@@ -60,7 +64,7 @@ export function grantedAccessMiddleware(
                     }),
                 );
 
-            const isOwner = resource.user_id === userIdFromToken;
+            const isOwner = resource[0].user_id === userIdFromToken;
 
             if (accessType === "owner" && !isOwner)
                 return next(
