@@ -24,4 +24,4 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-ENTRYPOINT ["node", "dist/server.js"]
+CMD ["node", "dist/server.js"]
