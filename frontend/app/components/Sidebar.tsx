@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Book, Users, Calendar, Star, BarChart2, Settings, LogOut, Clock, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { useLibrary } from "../components/LibraryContext";
+import { useLibrary } from "./LibraryContext";
 
 const adminNavItems = [
   { href: "/reservations", icon: Calendar, label: "Réservations" },
@@ -48,11 +48,10 @@ export default function Sidebar() {
             <li key={item.href} className="mb-2">
               <Link
                 href={item.href}
-                className={`flex items-center p-2 rounded-lg ${
-                  pathname === item.href
+                className={`flex items-center p-2 rounded-lg ${pathname === item.href
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-gray-200 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <item.icon className="mr-2 h-5 w-5" />
                 {item.label}

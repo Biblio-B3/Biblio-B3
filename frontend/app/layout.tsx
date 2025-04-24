@@ -10,23 +10,23 @@ import type React from "react"
 const inter = Inter({ subsets: ["latin"] })
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode
+    children: React.ReactNode
 }) {
-  return (
-    <html lang="fr">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <DisconnectAfterRevocationWrapper>
-            <LibraryProvider>
-              <AuthWrapper>{children}</AuthWrapper>
-            </LibraryProvider>
-          </DisconnectAfterRevocationWrapper>
-        </ThemeProvider>
-      </body>
-    </html>
-  )
+    return (
+        <html lang="fr">
+            <body className={inter.className}>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                    <DisconnectAfterRevocationWrapper>
+                        <LibraryProvider>
+                            <AuthWrapper>{children}</AuthWrapper>
+                        </LibraryProvider>
+                    </DisconnectAfterRevocationWrapper>
+                </ThemeProvider>
+            </body>
+        </html>
+    )
 }
 
 

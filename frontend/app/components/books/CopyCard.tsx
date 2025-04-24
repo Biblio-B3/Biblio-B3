@@ -117,7 +117,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
         )}
       </Card>
 
-      <ReservationDialog 
+      <ReservationDialog
         isOpen={reservationDialogOpen}
         onOpenChange={setReservationDialogOpen}
         copyId={copy.copy_id}
