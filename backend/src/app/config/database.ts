@@ -23,18 +23,48 @@ export async function startDatabase() {
         );
     }
 
-    if (NODE_ENV === "production")
-        await new Promise((resolve) => setTimeout(resolve, 15000));
-
-    db = drizzle(DATABASE_URL);
-
-    try {
-        await db.execute("select 1");
-        logMessage("Connected to the database.");
-    } catch (error) {
-        errorMessage("Error connecting to database:", error);
-        throw error;
+    if (NODE_ENV === "production") {
+        let connected = false;
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        while (!connected && attempts < maxAttempts) {
+            try {
+                db = drizzle(DATABASE_URL);
+                await db.execute("select 1");
+                connected = true;
+                logMessage("Connected to the database.");
+            } catch (error) {
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    errorMessage("Error connecting to database after 5 attempts:", error);
+                    throw error;
+                }
+                logMessage(`Tentative de connexion échouée (${attempts}/${maxAttempts}). Nouvelle tentative dans 2 secondes...`);
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+        }
+    } else {
+        db = drizzle(DATABASE_URL);
+        try {
+            await db.execute("select 1");
+            logMessage("Connected to the database.");
+        } catch (error) {
+            errorMessage("Error connecting to database:", error);
+            throw error;
+        }
     }
-    if (NODE_ENV === "production")
-        await migrate(db, { migrationsFolder: "drizzle" });
+    if (NODE_ENV === "production") {
+        try {
+            await migrate(db, { migrationsFolder: "drizzle" });
+            logMessage("Migration de la base de données réussie.");
+        } catch (error: unknown) {
+            if ((error as { code?: string }).code === '42710') {
+                logMessage("Migration ignorée: les types existent déjà dans la base de données.");
+            } else {
+                errorMessage("Erreur lors de la migration de la base de données:", error);
+                throw error;
+            }
+        }
+    }
 }

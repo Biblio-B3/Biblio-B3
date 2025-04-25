@@ -5,14 +5,12 @@ export const corsOptions: cors.CorsOptions = {
         if (process.env.NODE_ENV === "development") {
             callback(null, true);
         } else {
-            const allowedOrigins = [/^https?:\/\/(.*\.)?pfb\.ecole-89\.com$/];
+            const allowedOrigins = process.env.FRONTEND_URL?.split(',') || [];
 
-            if (
-                origin &&
-                allowedOrigins.some((pattern) => pattern.test(origin))
-            ) {
-                callback(null, origin);
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
             } else {
+                console.log(`CORS blocked origin: ${origin}, allowed origins: ${allowedOrigins}`);
                 callback(new Error("Origin not allowed by CORS"));
             }
         }
