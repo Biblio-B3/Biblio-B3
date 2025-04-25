@@ -1,7 +1,7 @@
 services:
 
   back:
-    image: superknacky/node_api_b3
+    image: superknacky/node_api_b3:latest
     container_name: Biblio-back
     expose:
       - "3001"
@@ -11,7 +11,7 @@ services:
       - db
 
   front:
-    image: superknacky/react_app_b3
+    image: superknacky/react_app_b3:latest
     container_name: Biblio-front
     expose:
       - "3000"
