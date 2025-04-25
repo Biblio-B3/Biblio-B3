@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { useUserRole } from "@/app/hooks/useUserRole";
+import { jwtDecode } from "jwt-decode";
 
 type ReservationDialogProps = {
   isOpen: boolean;
@@ -16,9 +18,18 @@ type ReservationDialogProps = {
   onSuccess?: () => void;
 };
 
-export const ReservationDialog = ({ isOpen, onOpenChange, copyId, onSuccess }: ReservationDialogProps) => {
+type JwtPayload = {
+  user_id: number;
+};
+
+export const ReservationDialog = ({
+  isOpen,
+  onOpenChange,
+  copyId,
+  onSuccess,
+}: ReservationDialogProps) => {
   const [userId, setUserId] = useState("");
-  const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -26,13 +37,30 @@ export const ReservationDialog = ({ isOpen, onOpenChange, copyId, onSuccess }: R
   const [users, setUsers] = useState<User[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const fetchWithAuth = useApiErrorHandler();
+  const role = useUserRole();
 
+  // ✅ Si c’est un user, on extrait directement son ID du token
+  useEffect(() => {
+    if (role === "user") {
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        try {
+          const decoded = jwtDecode<JwtPayload>(token);
+          setUserId(decoded.user_id.toString());
+        } catch (err) {
+          console.error("Erreur décodage JWT :", err);
+        }
+      }
+    }
+  }, [role]);
+
+  // ✅ Si admin : fetch users pour recherche email
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch("/api/users", {
           headers: {
-            "auth_token": `${localStorage.getItem("auth_token")}`,
+            auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
         if (response.ok) {
@@ -46,10 +74,10 @@ export const ReservationDialog = ({ isOpen, onOpenChange, copyId, onSuccess }: R
       }
     };
 
-    if (isOpen) {
+    if (isOpen && role === "admin") {
       fetchUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, role]);
 
   useEffect(() => {
     if (debounceTimeout.current) {
@@ -105,63 +133,65 @@ export const ReservationDialog = ({ isOpen, onOpenChange, copyId, onSuccess }: R
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <div className="relative">
-            <Input
-              id="userEmail"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowDropdown(true);
-              }}
-              placeholder="Recherche par e-mail"
-              className="border rounded-md px-3 py-2 bg-black text-white"
-            />
-            {showDropdown && filteredUsers.length > 0 && (
-              <div className="absolute top-full mt-1 w-full bg-black text-white border border-gray-700 rounded-md shadow-md max-h-40 overflow-y-auto">
-                {filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="p-2 hover:bg-gray-800 cursor-pointer"
-                    onClick={() => {
-                      setSearchQuery(user.email);
-                      setUserId(user.id.toString());
-                      setShowDropdown(false);
-                    }}
-                  >
-                    {user.email}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <DialogDescription>
-            Entrez l'ID de l'utilisateur ainsi que les dates de début et de fin de la réservation.
+            {role === "admin"
+              ? "Sélectionnez l'utilisateur et les dates de réservation."
+              : "Sélectionnez uniquement la date de fin de votre réservation."}
           </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleReservationSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 gap-2">
-              <Label htmlFor="userId">User ID</Label>
-              <Input
-                id="userId"
-                type="number"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                required
-              />
-            </div>
+            {/* ✅ Si admin : recherche utilisateur */}
+            {role === "admin" && (
+              <>
+                <div className="relative">
+                  <Input
+                    id="userEmail"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    placeholder="Recherche par e-mail"
+                    className="border rounded-md px-3 py-2 bg-black text-white"
+                  />
+                  {showDropdown && filteredUsers.length > 0 && (
+                    <div className="absolute top-full mt-1 w-full bg-black text-white border border-gray-700 rounded-md shadow-md max-h-40 overflow-y-auto z-10">
+                      {filteredUsers.map((user) => (
+                        <div
+                          key={user.id}
+                          className="p-2 hover:bg-gray-800 cursor-pointer"
+                          onClick={() => {
+                            setSearchQuery(user.email);
+                            setUserId(user.id.toString());
+                            setShowDropdown(false);
+                          }}
+                        >
+                          {user.email}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  <Label htmlFor="userId">User ID</Label>
+                  <Input
+                    id="userId"
+                    type="number"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ✅ Date début et fin (date de début = aujourd’hui, désactivée) */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor="startDate">Date de début</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  disabled
-                  required
-                />
-                {/* Champ caché pour envoyer la valeur lors de la soumission du formulaire */}
+                <Input id="startDate" type="date" value={startDate} disabled />
                 <input type="hidden" name="startDate" value={startDate} />
               </div>
               <div>
@@ -172,12 +202,13 @@ export const ReservationDialog = ({ isOpen, onOpenChange, copyId, onSuccess }: R
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate}
-                  max={format(new Date(new Date().setDate(new Date().getDate() + 28)), 'yyyy-MM-dd')}
+                  max={format(new Date(new Date().setDate(new Date().getDate() + 28)), "yyyy-MM-dd")}
                   required
                 />
               </div>
             </div>
           </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Annuler

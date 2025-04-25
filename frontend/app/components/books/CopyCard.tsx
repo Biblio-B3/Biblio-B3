@@ -7,15 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ReservationDialog } from "./ReservationDialog";
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 type CopyCardProps = {
   copy: Copy;
-  onDelete: (copyId: number) => Promise<void>;
+  onDelete?: (copyId: number) => Promise<void>;
   onUpdateCopy?: (copyId: number, newState: string) => Promise<void>;
 };
 
 export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const role = useUserRole();
 
   const getStateColor = (state: string) => {
     switch (state.toLowerCase()) {
@@ -40,18 +42,23 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
       <Card className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">Etat</Label>
-            <select
-              value={copy.state}
-              onChange={(e) => onUpdateCopy?.(copy.copy_id, e.target.value)}
-              className="rounded-md border px-2 py-1 text-xs"
-            >
-              <option value="excellent">Excellent</option>
-              <option value="bon">Bon</option>
-              <option value="moyen">Moyen</option>
-              <option value="mauvais">Mauvais</option>
-            </select>
+            <Label className="text-xs font-medium">État</Label>
+            {role === "admin" ? (
+              <select
+                value={copy.state}
+                onChange={(e) => onUpdateCopy?.(copy.copy_id, e.target.value)}
+                className="rounded-md border px-2 py-1 text-xs"
+              >
+                <option value="excellent">Excellent</option>
+                <option value="bon">Bon</option>
+                <option value="moyen">Moyen</option>
+                <option value="mauvais">Mauvais</option>
+              </select>
+            ) : (
+              <Badge className="w-fit text-xs capitalize mt-1">{copy.state}</Badge>
+            )}
           </div>
+
           <div className="flex gap-2">
             {copy.is_reserved && (
               <Badge
@@ -71,33 +78,39 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
             )}
           </div>
         </div>
-        <p className="text-sm mb-2">
-          ID exemplaire: #{copy.copy_id}
-        </p>
-        {copy.review_condition &&
-          copy.review_condition.length > 0 && (
-            <div className="mt-3">
-              <h4 className="text-sm font-medium mb-1">
-                Évaluations de l'état:
-              </h4>
-              <div className="flex flex-wrap gap-1">
-                {copy.review_condition.map(
-                  (condition, index) =>
-                    condition &&
-                    condition !== "null" && (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {condition}
-                      </Badge>
-                    )
-                )}
-              </div>
+
+        <p className="text-sm mb-2">ID exemplaire: #{copy.copy_id}</p>
+
+        {/* ✅ Affichage de la date de fin si réservé */}
+        {copy.is_reserved && copy.final_date && (
+          <p className="text-sm mb-2 text-muted-foreground">
+            Réservé jusqu’au :{" "}
+            {new Date(copy.final_date).toLocaleDateString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
+          </p>
+        )}
+
+        {copy.review_condition && copy.review_condition.length > 0 && (
+          <div className="mt-3">
+            <h4 className="text-sm font-medium mb-1">Évaluations de l'état :</h4>
+            <div className="flex flex-wrap gap-1">
+              {copy.review_condition.map(
+                (condition, index) =>
+                  condition &&
+                  condition !== "null" && (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {condition}
+                    </Badge>
+                  )
+              )}
             </div>
-          )}
-        {!copy.is_reserved && !copy.is_claimed && (
+          </div>
+        )}
+
+        {role === "admin" && onDelete && !copy.is_reserved && !copy.is_claimed && (
           <Button
             variant="destructive"
             className="mt-2 w-full"
@@ -122,9 +135,8 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
         onOpenChange={setReservationDialogOpen}
         copyId={copy.copy_id}
         onSuccess={() => {
-          // Fonction pour mettre à jour l'état local après réservation réussie
         }}
       />
     </>
   );
-}; 
+};
