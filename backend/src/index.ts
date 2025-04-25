@@ -20,7 +20,7 @@ if (!NODE_ENV) {
 }
 
 export const app = express();
-const port = 3000;
+const port = isNaN(Number(process.env.PORT)) ? 3001 : Number(process.env.PORT);
 
 app.use(helmet());
 app.use(cors(corsOptions));
