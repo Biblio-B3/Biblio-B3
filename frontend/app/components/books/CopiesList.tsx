@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Copy } from "./types";
 import { CopyCard } from "./CopyCard";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ ajout du hook
 
 type CopiesListProps = {
   bookId: string;
@@ -15,6 +16,7 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
   const [error, setError] = useState<string | null>(null);
   const [dataFetched, setDataFetched] = useState(false);
   const fetchWithAuth = useApiErrorHandler();
+  const role = useUserRole(); // ✅ rôle récupéré
 
   useEffect(() => {
     if (!bookId || dataFetched) return;
@@ -53,34 +55,6 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
       isMounted = false;
     };
   }, [bookId, fetchWithAuth, dataFetched]);
-
-  const handleUpdateCopy = async (copyId: number, newState: string) => {
-    try {
-      const response = await fetch(`/api/copy/${copyId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
-        body: JSON.stringify({ state: newState }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        alert(data.message || "Erreur lors de la mise à jour.");
-        return;
-      }
-
-      setCopies((prev) =>
-        prev.map((copy) =>
-          copy.copy_id === copyId ? { ...copy, state: newState } : copy
-        )
-      );
-    } catch (error) {
-      console.error("Erreur mise à jour état copie :", error);
-      alert("Erreur réseau lors de la mise à jour.");
-    }
-  };
 
   const handleDeleteCopy = async (copyId: number) => {
     const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette copie ?");
@@ -128,7 +102,11 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
       {copies.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {copies.map((copy) => (
-            <CopyCard key={copy.copy_id} copy={copy} onDelete={handleDeleteCopy} />
+            <CopyCard
+              key={copy.copy_id}
+              copy={copy}
+              {...(role === "admin" ? { onDelete: handleDeleteCopy } : {})} // ✅ condition
+            />
           ))}
         </div>
       ) : (

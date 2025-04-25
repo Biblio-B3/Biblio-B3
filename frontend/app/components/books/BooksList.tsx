@@ -1,92 +1,93 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { BookCard } from "./BookCard"
-import { Button } from "@/components/ui/button"
-import { Book, Pagination } from "./types"
-import { Plus } from "lucide-react"
-import { AddBookDialog } from "./AddBookDialog"
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation"
-import { useSearchParams } from "next/navigation"
-import SearchBar from "./SearchBar"
+import { useState, useEffect } from "react";
+import { BookCard } from "./BookCard";
+import { Button } from "@/components/ui/button";
+import { Book, Pagination } from "./types";
+import { Plus } from "lucide-react";
+import { AddBookDialog } from "./AddBookDialog";
+import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { useSearchParams } from "next/navigation";
+import SearchBar from "./SearchBar";
+import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ import du hook
 
 export const BooksList = () => {
-  const [books, setBooks] = useState<Book[]>([])
-  const [pagination, setPagination] = useState<Pagination | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm)
-  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false)
-  const fetchWithAuth = useApiErrorHandler()
-  const searchParams = useSearchParams()
+  const [books, setBooks] = useState<Book[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
+  const fetchWithAuth = useApiErrorHandler();
+  const searchParams = useSearchParams();
+  const role = useUserRole(); // ✅ récupération du rôle
 
-  const itemsPerPage = 30
+  const itemsPerPage = 30;
 
-  // Met à jour debouncedSearchTerm après 0.5s sans frappe
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500)
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
 
-    return () => clearTimeout(handler)
-  }, [searchTerm])
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
-  // Réinitialise la page à 1 quand le terme change
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm])
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchBooks = async () => {
-    const isSearching = debouncedSearchTerm.trim().length > 0
+    const isSearching = debouncedSearchTerm.trim().length > 0;
 
     const url = isSearching
       ? `/api/books/search/${encodeURIComponent(debouncedSearchTerm)}?page=${currentPage}&itemsPerPage=${itemsPerPage}`
-      : `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+      : `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`;
 
-    console.log("📡 URL appelée depuis le frontend :", url)
+    console.log("📡 URL appelée depuis le frontend :", url);
 
     try {
       const response = await fetchWithAuth(url, {
         headers: {
           auth_token: `${localStorage.getItem("auth_token")}`,
         },
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
-        setBooks(data.data)
-        setPagination(data.pagination)
+        setBooks(data.data);
+        setPagination(data.pagination);
       } else {
-        console.error("Erreur API :", data.message)
-        setBooks([])
-        setPagination(null)
+        console.error("Erreur API :", data.message);
+        setBooks([]);
+        setPagination(null);
       }
     } catch (error) {
-      console.error("Erreur lors du fetch des livres :", error)
-      setBooks([])
-      setPagination(null)
+      console.error("Erreur lors du fetch des livres :", error);
+      setBooks([]);
+      setPagination(null);
     }
-  }
+  };
 
   useEffect(() => {
     if (!searchParams.get("bookId")) {
-      fetchBooks()
-      document.body.scrollTo({ top: 0, behavior: "smooth" })
+      fetchBooks();
+      document.body.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [debouncedSearchTerm, currentPage])
+  }, [debouncedSearchTerm, currentPage]);
 
-
-  if (searchParams.get("bookId")) return null
+  if (searchParams.get("bookId")) return null;
 
   return (
     <>
       <div className="container mx-auto py-6">
         <div className="flex justify-between mb-4">
           <SearchBar onSearch={setSearchTerm} />
-          <Button onClick={() => setIsAddBookDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
-          </Button>
+          {role === "admin" && (
+            <Button onClick={() => setIsAddBookDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -120,10 +121,12 @@ export const BooksList = () => {
         )}
       </div>
 
-      <AddBookDialog
-        isOpen={isAddBookDialogOpen}
-        onOpenChange={setIsAddBookDialogOpen}
-      />
+      {role === "admin" && (
+        <AddBookDialog
+          isOpen={isAddBookDialogOpen}
+          onOpenChange={setIsAddBookDialogOpen}
+        />
+      )}
     </>
-  )
-}
+  );
+};

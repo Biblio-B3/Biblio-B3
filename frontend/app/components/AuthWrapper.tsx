@@ -1,61 +1,65 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import Sidebar from "./Sidebar"
-import type React from "react"
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Sidebar from "./Sidebar";
+import { jwtDecode } from "jwt-decode";
+
+import type React from "react";
 
 type AuthWrapperProps = {
-  children: React.ReactNode
-}
+  children: React.ReactNode;
+};
 
-const adminBasePaths = ["/reservations", "/books", "/users", "/reviews", "/stats", "/settings"]
-const adminDynamicPaths = ["/user-history"]
-const userRoutes = ["/", "/history"]
-const publicRoutes = ["/login", "/register", "/reset-password"]
+const publicRoutes = ["/login", "/register", "/reset-password"];
+
+type JwtPayload = {
+  role?: string;
+};
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const isAdminRoute = (path: string) => {
-    return adminBasePaths.includes(path) ||
-      adminDynamicPaths.some(dynamicPath => path.startsWith(dynamicPath))
-  }
-
-  const isUserRoute = (path: string) => {
-    return userRoutes.includes(path)
-  }
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const isPublicRoute = (path: string) => {
-    return publicRoutes.includes(path)
-  }
+    return publicRoutes.includes(path);
+  };
 
   useEffect(() => {
-    const storedUserRole = localStorage.getItem("userRole")
-    setUserRole(storedUserRole)
+    const token = localStorage.getItem("auth_token");
 
-    if (!storedUserRole && !isPublicRoute(pathname)) {
-      router.push("/login")
-    } else if (storedUserRole) {
-      setIsAuthenticated(true)
-
-      if (storedUserRole === "admin" && !isAdminRoute(pathname)) {
-        router.push("/reservations")
-      } else if (storedUserRole === "user" && !isUserRoute(pathname)) {
-        router.push("/")
+    if (!token) {
+      if (!isPublicRoute(pathname)) {
+        router.push("/login");
       }
+      return;
     }
-  }, [pathname, router])
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      const role = decoded.role || null;
+      setUserRole(role);
+
+      if (!role && !isPublicRoute(pathname)) {
+        router.push("/login");
+      } else {
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.error("Erreur de décodage du token :", error);
+      localStorage.removeItem("auth_token");
+      router.push("/login");
+    }
+  }, [pathname, router]);
 
   if (isPublicRoute(pathname)) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
-  if (!isAuthenticated && !isPublicRoute(pathname)) {
-    return null
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
@@ -63,6 +67,5 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
-  )
+  );
 }
-

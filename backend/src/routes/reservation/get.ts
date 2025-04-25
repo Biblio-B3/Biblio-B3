@@ -79,21 +79,39 @@ app.get(
             const userId = parseInt(req.params.id, 10);
             if (isNaN(userId) || userId <= 0)
                 throw new AppError("Invalid user ID", 400);
+
             const foundReservation = await db
-                .select()
+                .select({
+                    id: reservation.id,
+                    reservation_date: reservation.reservation_date,
+                    final_date: reservation.final_date,
+                    copy_id: reservation.copy_id,
+                    user_id: reservation.user_id,
+                    is_claimed: copy.is_claimed,
+                    book_title: books.title,
+                })
                 .from(reservation)
+                .innerJoin(copy, eq(copy.id, reservation.copy_id))
+                .innerJoin(books, eq(books.id, copy.book_id))
                 .where(eq(reservation.user_id, userId));
-            const validatedReservations = foundReservation.map((r) =>
-                selectReservationSchema.parse(r),
-            );
-            if (validatedReservations.length === 0)
+
+            if (foundReservation.length === 0)
                 throw new AppError("Reservation not found", 404);
-            res.status(200).json(validatedReservations);
+
+            const validated = foundReservation.map((r) => ({
+                id: r.id,
+                copy_id: r.copy_id,
+                user_id: r.user_id,
+                reservation_date: r.reservation_date,
+                final_date: r.final_date,
+                is_claimed: r.is_claimed,
+                book_title: r.book_title,
+            }));
+
+            res.status(200).json(validated);
         } catch (error) {
             if (error instanceof AppError) return next(error);
-            next(
-                new AppError("Error while retrieving reservation.", 500, error),
-            );
+            next(new AppError("Error while retrieving reservation.", 500, error));
         }
-    },
+    }
 );

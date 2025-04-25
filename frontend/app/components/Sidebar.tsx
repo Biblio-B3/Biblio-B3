@@ -18,7 +18,8 @@ const adminNavItems = [
 ]
 
 const userNavItems = [
-  { href: "/", icon: Home, label: "Accueil" },
+  { href: "/books", icon: Home, label: "Accueil" },
+  { href: "/reservation_user", icon: Clock, label: "Reservation" },
   { href: "/history", icon: Clock, label: "Historique" },
 ]
 
@@ -49,8 +50,8 @@ export default function Sidebar() {
               <Link
                 href={item.href}
                 className={`flex items-center p-2 rounded-lg ${pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
               >
                 <item.icon className="mr-2 h-5 w-5" />
