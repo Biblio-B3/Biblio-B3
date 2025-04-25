@@ -12,6 +12,7 @@ type AuthWrapperProps = {
 const adminBasePaths = ["/reservations", "/books", "/users", "/reviews", "/stats", "/settings"]
 const adminDynamicPaths = ["/user-history"]
 const userRoutes = ["/", "/history"]
+const publicRoutes = ["/login", "/register", "/reset-password"]
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -28,11 +29,15 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     return userRoutes.includes(path)
   }
 
+  const isPublicRoute = (path: string) => {
+    return publicRoutes.includes(path)
+  }
+
   useEffect(() => {
     const storedUserRole = localStorage.getItem("userRole")
     setUserRole(storedUserRole)
 
-    if (!storedUserRole && pathname !== "/login" && pathname !== "/register") {
+    if (!storedUserRole && !isPublicRoute(pathname)) {
       router.push("/login")
     } else if (storedUserRole) {
       setIsAuthenticated(true)
@@ -45,11 +50,11 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     }
   }, [pathname, router])
 
-  if (pathname === "/login" || pathname === "/register") {
+  if (isPublicRoute(pathname)) {
     return <>{children}</>
   }
 
-  if (!isAuthenticated && pathname !== "/register" && pathname !== "/login") {
+  if (!isAuthenticated && !isPublicRoute(pathname)) {
     return null
   }
 

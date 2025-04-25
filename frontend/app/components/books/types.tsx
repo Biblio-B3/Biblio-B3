@@ -35,6 +35,7 @@ export type Review = {
   user_first_name: string;
   user_last_name: string;
   book_title: string;
+  created_at: string;
 };
 
 export type Pagination = {

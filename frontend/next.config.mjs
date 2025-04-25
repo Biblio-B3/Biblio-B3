@@ -8,6 +8,13 @@ try {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
 
+  output: "standalone",
+  distDir: process.env.DIST_DIR || '.next',
+  poweredByHeader: false,
+  reactStrictMode: true,
+  env: {
+    NEXT_TELEMETRY_DISABLED: '1',
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

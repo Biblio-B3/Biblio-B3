@@ -3,6 +3,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { books } from "./book";
 import { copy } from "./copy";
 import { users } from "./users";
+import z from "zod";
 
 export const review = pgTable(
     "review",
@@ -20,7 +21,7 @@ export const review = pgTable(
         user_id: integer("user_id")
             .notNull()
             .references(() => users.id, { onDelete: "cascade" }),
-        created_at: timestamp("created_at").notNull().defaultNow(),
+        created_at: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [unique().on(table.user_id, table.book_id)],
 );
@@ -40,6 +41,7 @@ export const insertReviewSchema = createInsertSchema(review, {
             .max(5, { message: "The maximum note is 5." }),
     book_id: (schema) => schema.book_id,
     user_id: (schema) => schema.user_id,
+    created_at: z.coerce.date(),
 });
 
 export const selectReviewSchema = createSelectSchema(review, {
@@ -49,6 +51,7 @@ export const selectReviewSchema = createSelectSchema(review, {
     condition: (schema) => schema.condition,
     copy_id: (schema) => schema.copy_id,
     user_id: (schema) => schema.user_id,
+    created_at: z.coerce.date(),
 });
 
 export const updateReviewSchema = createInsertSchema(review, {
