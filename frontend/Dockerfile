@@ -7,7 +7,9 @@ RUN corepack enable && yarn install --frozen-lockfile
 FROM deps AS builder
 WORKDIR /app
 
-COPY . .
+COPY . ./
+RUN rm -f .env
+COPY .env.docker .env
 
 RUN yarn build
 
@@ -18,6 +20,7 @@ WORKDIR /app
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static    ./.next/static
 COPY --from=builder /app/public          ./public
+COPY --from=builder /app/.env ./.env 
 
-EXPOSE 4000
+EXPOSE 3000
 CMD ["./server.js"] 
