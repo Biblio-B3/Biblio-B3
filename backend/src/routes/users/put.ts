@@ -6,6 +6,8 @@ import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { grantedAccessMiddleware } from "../../app/middlewares/verify_access_right";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
+import { generateToken } from "../../app/middlewares/jwt";
+import { sendResetPasswordEmail } from "../../app/config/email";
 
 export async function updateUser(id: number, data: Request) {
     const validatedData = newUpdateUserSchema.parse(data);
@@ -50,6 +52,33 @@ app.put(
                 throw new AppError("Invalid user ID provided.", 400);
             if (Object.keys(req.body).length === 0)
                 throw new AppError("No data provided for update.", 400);
+
+            if (req.body.resetPassword) {
+                try {
+                    const [user] = await db
+                        .select()
+                        .from(users)
+                        .where(eq(users.id, userId));
+
+                    if (!user) {
+                        throw new AppError("User not found", 404);
+                    }
+
+                    const resetToken = await generateToken(userId, "reset");
+                    await sendResetPasswordEmail(user.email, resetToken);
+
+                    res.status(200).json({
+                        message: "Email de réinitialisation envoyé avec succès",
+                    });
+                    return;
+                } catch (error) {
+                    console.error("Erreur lors de l'envoi de l'email:", error);
+                    res.status(200).json({
+                        message: "Email de réinitialisation envoyé avec succès",
+                    });
+                    return;
+                }
+            }
 
             const updatedUser = await updateUser(userId, req.body);
             if (!updatedUser)
