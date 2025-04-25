@@ -1,0 +1,49 @@
+name: Deploy to Server
+
+on:
+  workflow_run:
+    workflows: ["Docker Image Back CI", "Docker Image Front CI"]
+    types:
+      - completed
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Configure SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+      - name: Add SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy SSL certificates
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_CRT: ${{ secrets.SERVER_CRT }}
+          SERVER_KEY: ${{ secrets.SERVER_KEY }}
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /deployment/nginx/ssl"
+          echo "${{ secrets.SERVER_CRT }}" | ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "cat > /deployment/nginx/ssl/server.crt"
+          echo "${{ secrets.SERVER_KEY }}" | ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "cat > /deployment/nginx/ssl/server.key"
+      
+      - name: Deploy to server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /deployment
+            
+            docker-compose down || true
+            
+            docker-compose up -d
+          EOF
