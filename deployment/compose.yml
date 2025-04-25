@@ -1,7 +1,7 @@
 services:
 
   back:
-    image: test2
+    image: back
     container_name: Biblio-back
     expose:
       - "3001"
