@@ -22,6 +22,7 @@ export type Copy = {
   is_claimed: boolean;
   book_id: number;
   review_condition: string[] | null;
+  final_date?: string | null;
 };
 
 export type Review = {

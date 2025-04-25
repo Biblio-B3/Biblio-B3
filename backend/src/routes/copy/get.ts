@@ -8,6 +8,7 @@ import { NextFunction, Request, Response } from "express";
 import { generateBarcodeImage } from "../../app/services/barcode";
 import { AppError } from "../../app/utils/AppError";
 import { grantedAccessMiddleware } from "../../app/middlewares/verify_access_right";
+import { reservation } from "../../db/schema/reservation";
 
 app.get(
     "/copy",
@@ -28,35 +29,47 @@ app.get(
 );
 
 app.get(
-    "/copy/:id",
+    "/books/:id/copy",
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const copyId = parseInt(req.params.id, 10);
-            if (isNaN(copyId) || copyId <= 0)
-                throw new AppError("Invalid copy id provided.", 400, {
-                    id: copyId,
-                });
+            const bookId = parseInt(req.params.id, 10);
+            if (isNaN(bookId) || bookId <= 0)
+                throw new AppError("Invalid copy id provided.", 400, { id: bookId });
 
-            const [selectedCopy] = await db
-                .select()
+            const copies = await db
+                .select({
+                    copy_id: copy.id,
+                    state: copy.state,
+                    is_reserved: copy.is_reserved,
+                    is_claimed: copy.is_claimed,
+                    book_id: copy.book_id,
+                    final_date: reservation.final_date,
+                    review_condition: sql`array_agg(${review.condition})`.as("review_condition"),
+                })
                 .from(copy)
-                .where(eq(copy.id, copyId))
-                .limit(1);
+                .leftJoin(review, eq(copy.id, review.copy_id))
+                .leftJoin(reservation, eq(reservation.copy_id, copy.id))
+                .where(eq(copy.book_id, bookId))
+                .groupBy(
+                    copy.id,
+                    copy.state,
+                    copy.is_reserved,
+                    copy.is_claimed,
+                    copy.book_id,
+                    reservation.final_date
+                );
 
-            if (!selectedCopy)
-                throw new AppError("Copy not found.", 404, {
-                    copy: `id: ${copyId}`,
-                });
+            if (!copies || copies.length === 0) {
+                throw new AppError("No copies found for this book.", 404, { id: bookId });
+            }
 
-            res.status(200).json(selectedCopy);
+            res.status(200).json(copies);
         } catch (error) {
             if (error instanceof AppError) return next(error);
-            return next(
-                new AppError("Error while retrieving the copy.", 500, error),
-            );
+            return next(new AppError("Error while retrieving copies for book.", 500, error));
         }
-    },
+    }
 );
 
 app.get(
