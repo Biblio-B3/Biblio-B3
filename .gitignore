@@ -136,3 +136,6 @@ result.txt
 drizzle
 
 .vscode/
+
+deployment/db
+deployment/nginx/ssl
