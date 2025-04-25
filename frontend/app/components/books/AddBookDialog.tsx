@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 type AddBookDialogProps = {
   isOpen: boolean;
@@ -13,6 +14,7 @@ type AddBookDialogProps = {
 };
 
 export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
+  const role = useUserRole();
   const [importMode, setImportMode] = useState<"isbn" | "manual">("isbn");
   const [importError, setImportError] = useState<string | null>(null);
   const [manualQuantity, setManualQuantity] = useState<number>(1);
@@ -23,7 +25,8 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     setCopyStates(Array(manualQuantity).fill("new"));
   }, [manualQuantity, importMode]);
 
-  // Fonction pour gérer l'import via ISBN
+  if (role !== "admin") return null;
+
   const handleImportSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -48,7 +51,6 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     }
   };
 
-  // Fonction pour gérer l'import manuel
   const handleManualSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -116,7 +118,6 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
                 }}
               />
             </div>
-            {/* Champs dynamiques pour définir l'état de chaque copie */}
             {copyStates.map((copyState, index) => (
               <div key={index} className="flex flex-col">
                 <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>
@@ -148,7 +149,6 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
             </div>
           </form>
         ) : (
-          // Formulaire d'import manuel
           <div className="max-h-96 overflow-y-auto">
             <form onSubmit={handleManualSubmit} className="grid gap-4 py-4">
               <div className="flex flex-col">
@@ -181,7 +181,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
               </div>
               <div className="flex flex-col">
                 <Label htmlFor="language">Langue</Label>
-                <Input id="language" name="language" type="text" required placeholder="Ex: FR / EN / ES" />
+                <Input id="language" name="language" type="text" required />
               </div>
               <div className="flex flex-col">
                 <Label htmlFor="publish_date">Date de publication</Label>
@@ -214,7 +214,6 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
                   }}
                 />
               </div>
-              {/* Champs dynamiques pour définir l'état de chaque copie */}
               {copyStates.map((copyState, index) => (
                 <div key={index} className="flex flex-col">
                   <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>

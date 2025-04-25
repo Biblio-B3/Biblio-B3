@@ -1,47 +1,123 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useEffect, useState } from "react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { jwtDecode } from "jwt-decode";
 
-type Reservation = {
-  id: number
-  bookTitle: string
-  reservationDate: string
-  returnDate: string | null
-  status: "En cours" | "Terminée" | "Annulée"
+type UserHistory = {
+    id: number;
+    date_read: string;
+    book_title: string;
+    user_first_name: string;
+    user_last_name: string;
+};
+
+type JwtPayload = {
+    user_id: number;
+};
+
+export default function UserHistoryClient() {
+    const [history, setHistory] = useState<UserHistory[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const fetchWithAuth = useApiErrorHandler();
+
+    const getUserIdFromToken = (): number | null => {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return null;
+        try {
+            const decoded = jwtDecode<JwtPayload>(token);
+            return decoded.user_id || null;
+        } catch {
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        const fetchUserHistory = async () => {
+            const userId = getUserIdFromToken();
+            if (!userId) {
+                setError("Utilisateur non authentifié.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth(`/api/users/${userId}/historical`, {
+                    method: "GET",
+                    headers: {
+                        auth_token: `${localStorage.getItem("auth_token")}`,
+                    },
+                });
+
+                if (!response.ok)
+                    throw new Error("Erreur lors de la récupération de l'historique");
+
+                const data: UserHistory[] = await response.json();
+                setHistory(data);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Erreur inconnue");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserHistory();
+    }, [fetchWithAuth]);
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "Date manquante";
+
+        const normalized = dateString.includes(" ")
+            ? dateString.replace(" ", "T")
+            : dateString;
+
+        const date = new Date(normalized);
+
+        return isNaN(date.getTime())
+            ? "Date invalide"
+            : format(date, "dd-MM-yyyy", { locale: fr });
+    };
+
+    if (loading) return <p>Chargement de l'historique...</p>;
+    if (error) return <p className="text-red-500">{error}</p>;
+
+    return (
+        <div className="space-y-4">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Titre du Livre</TableHead>
+                        <TableHead>Date de lecture</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {history.map((item) => (
+                        <TableRow key={item.id}>
+                            <TableCell>{item.book_title}</TableCell>
+                            <TableCell>
+                                {item.date_read ? formatDate(item.date_read) : "—"}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+
+            {history.length === 0 && (
+                <p className="text-muted-foreground text-center mt-6">
+                    Aucun historique trouvé.
+                </p>
+            )}
+        </div>
+    );
 }
-
-const reservationsData: Reservation[] = [
-  { id: 1, bookTitle: "Le Petit Prince", reservationDate: "2023-05-01", returnDate: "2023-05-15", status: "Terminée" },
-  { id: 2, bookTitle: "1984", reservationDate: "2023-06-01", returnDate: null, status: "En cours" },
-  { id: 3, bookTitle: "Dune", reservationDate: "2023-04-15", returnDate: "2023-04-30", status: "Terminée" },
-  { id: 4, bookTitle: "L'Étranger", reservationDate: "2023-07-01", returnDate: null, status: "Annulée" },
-]
-
-export default function HistoryClient() {
-  const [reservations, setReservations] = useState<Reservation[]>(reservationsData)
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Titre du livre</TableHead>
-          <TableHead>Date de réservation</TableHead>
-          <TableHead>Date de retour</TableHead>
-          <TableHead>Statut</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {reservations.map((reservation) => (
-          <TableRow key={reservation.id}>
-            <TableCell>{reservation.bookTitle}</TableCell>
-            <TableCell>{reservation.reservationDate}</TableCell>
-            <TableCell>{reservation.returnDate || "Non retourné"}</TableCell>
-            <TableCell>{reservation.status}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  )
-}
-
