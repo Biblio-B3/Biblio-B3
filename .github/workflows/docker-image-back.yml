@@ -1,10 +1,14 @@
-name: Docker Image CI
+name: Docker Image Back CI
 
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'backend/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'backend/**'
   workflow_dispatch:
 jobs:
 
@@ -42,14 +46,4 @@ jobs:
           --tag ${{ secrets.DOCKER_USERNAME }}/node_api_b3:latest \
           --push \
           backend/
-
-    - name: Build Next.js front image
-      run: |
-        docker buildx build \
-          --platform linux/amd64,linux/arm64 \
-          --file frontend/Dockerfile \
-          --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:${{ env.TIMESTAMP }}-v${{ env.VERSION }} \
-          --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:latest \
-          --push \
-          frontend/
 
