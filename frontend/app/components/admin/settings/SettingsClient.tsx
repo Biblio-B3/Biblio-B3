@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
-import { CheckUserId } from "../login/LoginForm"
+import { CheckUserId } from "@/app/login/LoginForm"
+import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
 
 export default function SettingsClient() {
   const [libraryName, setLibraryName] = useState("WardenPro Librario")
@@ -50,6 +51,8 @@ export default function SettingsClient() {
     }
   }
 
+  const fetchWithAuth = useApiErrorHandler();
+
   const handleLogoutAllDevices = async () => {
     try {
       const token = localStorage.getItem("auth_token")
@@ -59,11 +62,10 @@ export default function SettingsClient() {
 
       const userId = CheckUserId(token)
 
-      const response = await fetch(`/api/logout/${userId}`, {
+      const response = await fetchWithAuth(`/api/logout/${userId}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "auth_token": token
+          auth_token: token
         }
       })
 

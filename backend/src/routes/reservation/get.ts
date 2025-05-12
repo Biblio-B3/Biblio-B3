@@ -38,7 +38,11 @@ app.get(
                 .innerJoin(users, eq(users.id, reservation.user_id))
                 .execute();
 
-            console.log(allReservations);
+            if (allReservations.length === 0) {
+                console.log("No reservations found");
+            } else {
+                console.log("Reservations data:", allReservations);
+            }
 
             const validatedReservations = allReservations.map((r) => {
                 const validatedReservation = selectReservationSchema.parse(r);
