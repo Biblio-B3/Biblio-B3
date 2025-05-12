@@ -9,18 +9,18 @@ import { useRouter } from "next/navigation"
 import { useLibrary } from "./LibraryContext";
 
 const adminNavItems = [
-  { href: "/reservations", icon: Calendar, label: "Réservations" },
+  { href: "/components/admin/reservations", icon: Calendar, label: "Réservations" },
   { href: "/books", icon: Book, label: "Livres" },
-  { href: "/users", icon: Users, label: "Utilisateurs" },
-  { href: "/reviews", icon: Star, label: "Évaluations" },
-  { href: "/stats", icon: BarChart2, label: "Statistiques" },
-  { href: "/settings", icon: Settings, label: "Paramètres" }
+  { href: "/components/admin/users", icon: Users, label: "Utilisateurs" },
+  { href: "/components/admin/reviews", icon: Star, label: "Évaluations" },
+  { href: "/components/admin/stats", icon: BarChart2, label: "Statistiques" },
+  { href: "/components/admin/settings", icon: Settings, label: "Paramètres" }
 ]
 
 const userNavItems = [
   { href: "/books", icon: Home, label: "Accueil" },
-  { href: "/reservation_user", icon: Clock, label: "Reservation" },
-  { href: "/history", icon: Clock, label: "Historique" },
+  { href: "/components/user/reservation_user", icon: Clock, label: "Reservation" },
+  { href: "/components/user/history", icon: Clock, label: "Historique" },
 ]
 
 export default function Sidebar() {
@@ -70,4 +70,3 @@ export default function Sidebar() {
     </aside>
   )
 }
-

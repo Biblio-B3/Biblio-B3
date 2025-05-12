@@ -32,7 +32,8 @@ export function errorMessage(message: string, error?: unknown) {
     log += "\n";
     if (error) {
         console.error(error);
-        log += "\n";
+        log += error instanceof Error ? `\n${error.stack}` : `\n${error}`;
     }
+    log += "\n";
     fs.appendFileSync(path.join(logDir, "error.log"), log);
 }
