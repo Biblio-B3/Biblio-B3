@@ -1,5 +1,4 @@
 import { db } from "../config/database";
-import { NODE_ENV } from "../..";
 import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import { AppError } from "../utils/AppError";
@@ -10,8 +9,6 @@ export function grantedAccessMiddleware(
 ) {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            //inversed the condition to test it
-            if (NODE_ENV !== "development") return next();
             if (!req.payload?.user_id || !req.payload?.role)
                 return next(
                     new AppError("Unauthorized: No user ID in token.", 401),
