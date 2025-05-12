@@ -3,7 +3,6 @@ import { NODE_ENV } from "../..";
 import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import { AppError } from "../utils/AppError";
-import { users } from "../../db/schema/users";
 
 export function grantedAccessMiddleware(
     accessType: "owner" | "admin" | "admin_or_owner",
@@ -41,23 +40,12 @@ export function grantedAccessMiddleware(
                 );
 
             let resource = null;
-            if (schema === users) {
-                resource = await db
-                    .select({ user_id: schema.id })
-                    .from(schema)
-                    .where(eq(schema.id, resourceId));
-            } else {
-                console.log("ressourceId", resourceId);
+            resource = await db
+                .select({ user_id: schema.id })
+                .from(schema)
+                .where(eq(schema.id, resourceId));
 
-                resource = await db
-                    .select({ user_id: schema.user_id })
-                    .from(schema)
-                    .where(eq(schema.user_id, resourceId));
-
-                console.log("resource ", resource[0].user_id)
-            }
-
-            if (!resource)
+            if (!resource || resource.length === 0 || !resource[0])
                 return next(
                     new AppError(`Resource with ID ${resourceId} not found.`, 404, {
                         id: resourceId,
@@ -82,6 +70,7 @@ export function grantedAccessMiddleware(
 
             next();
         } catch (error) {
+            console.error("Error while verifying access:", error);
             next(new AppError("Error while verifying access.", 500, error));
         }
     };
