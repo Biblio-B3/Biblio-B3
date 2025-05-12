@@ -5,7 +5,7 @@ import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Book, Pagination } from "./types";
 import { Plus } from "lucide-react";
-import { AddBookDialog } from "./AddBookDialog";
+import { AddBookDialog } from "../admin/AddBookDialog";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "./SearchBar";

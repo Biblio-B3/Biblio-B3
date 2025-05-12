@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const UserReservations = dynamic(() => import("@/app/reservation_user/ReservationClientUser"), {
+const UserReservations = dynamic(() => import("./ReservationClientUser"), {
     ssr: false,
 });
 

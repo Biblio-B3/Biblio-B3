@@ -1,4 +1,4 @@
-import UserHistoryClient from "@/app/user-history/[id]/UserHistoryClient";
+import UserHistoryClient from "./UserHistoryClient";
 
 type Props = {
     params: {
@@ -12,4 +12,4 @@ export default function UserHistoryPage({ params }: Props) {
             <UserHistoryClient userId={params.id} />
         </div>
     );
-} 
+}
