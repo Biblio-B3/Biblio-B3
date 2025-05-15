@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +15,11 @@ export default function SettingsClient() {
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [darkMode, setDarkMode] = useState(false)
   const { toast } = useToast()
+  const { setTheme } = useTheme()
+
+  useEffect(() => {
+    setTheme(darkMode ? "dark" : "light")
+  }, [darkMode, setTheme])
 
   const handleSave = async () => {
     try {
@@ -98,6 +104,11 @@ export default function SettingsClient() {
       <div className="flex items-center space-x-2">
         <Switch id="emailNotifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
         <Label htmlFor="emailNotifications">Activer les notifications par email</Label>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Switch id="darkMode" checked={darkMode} onCheckedChange={setDarkMode} />
+        <Label htmlFor="darkMode">Activer le mode sombre</Label>
       </div>
 
       <div className="space-y-2">

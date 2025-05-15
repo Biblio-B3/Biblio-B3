@@ -1,6 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +37,13 @@ type Review = {
 export default function ReviewsClient() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(true);
+
+  useEffect(() => {
+    if (!error && reviews.length > 0) {
+      setIsOpen(false);
+    }
+  }, [reviews, error]);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -74,7 +90,35 @@ export default function ReviewsClient() {
 
   return (
     <>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && (
+        <AlertDialog open={isOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Erreur</AlertDialogTitle>
+              <AlertDialogDescription>{error}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setIsOpen(false)}>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {!error && reviews.length === 0 && (
+        <AlertDialog open={isOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Aucune évaluation trouvée</AlertDialogTitle>
+              <AlertDialogDescription>
+                {error || "Il n'y a actuellement aucune évaluation à afficher."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setIsOpen(false)}>OK</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       <Table>
         <TableHeader>
