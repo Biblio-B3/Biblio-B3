@@ -8,7 +8,6 @@ import { AppError } from "../../app/utils/AppError";
 
 app.get(
     "/books",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const itemsPerPage = req.query.itemsPerPage

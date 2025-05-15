@@ -12,7 +12,6 @@ import { reservation } from "../../db/schema/reservation";
 
 app.get(
     "/copy",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const allCopies = await db.select().from(copy);
