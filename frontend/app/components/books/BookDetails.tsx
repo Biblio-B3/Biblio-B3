@@ -11,6 +11,7 @@ import Image from "next/image";
 import { CopiesList } from "./CopiesList";
 import { ReviewsList } from "./ReviewsList";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
 
 type BookDetailsProps = {
   bookId: string;
@@ -33,11 +34,8 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     const fetchBookDetails = async () => {
       try {
         setLoading(true);
-        const bookResponse = await fetchWithAuth(`/api/books/${bookId}`, {
-          headers: {
-            auth_token: `${localStorage.getItem("auth_token")}`,
-          },
-        });
+        // Utiliser fetch standard pour les requêtes GET (pas besoin d'authentification)
+        const bookResponse = await fetch(`/api/books/${bookId}`);
 
         if (!isMounted) return;
 

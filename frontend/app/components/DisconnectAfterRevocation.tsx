@@ -16,9 +16,10 @@ function handleApiError(error: any, router: any) {
 async function fetchWithAuthCheck(input: RequestInfo, init?: RequestInit, router?: any) {
     const token = localStorage.getItem("auth_token");
 
+    // Si pas de token, on continue sans redirection automatique
+    // L'utilisateur pourra toujours cliquer sur le bouton "Se connecter"
     if (!token) {
-        router?.replace("/login");
-        return Promise.reject(new Error("No auth token found"));
+        return fetch(input, init);
     }
 
     const response = await fetch(input, init);
@@ -40,12 +41,9 @@ async function fetchWithAuthCheck(input: RequestInfo, init?: RequestInit, router
 export function useApiErrorHandler() {
     const router = useRouter();
 
-    useEffect(() => {
-        if (!localStorage.getItem("auth_token")) {
-            router.replace("/login");
-        }
-    }, [router]);
-
+    // Suppression de la redirection automatique vers /login
+    // Nous gardons uniquement la logique de gestion des erreurs d'API
+    
     return (input: RequestInfo, init?: RequestInit) => fetchWithAuthCheck(input, init, router);
 }
 

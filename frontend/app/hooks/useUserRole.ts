@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import { isClient, getLocalStorageItem } from "../utils/isClient";
 
 type JwtPayload = {
     role?: string;
@@ -11,7 +12,9 @@ export const useUserRole = () => {
     const [role, setRole] = useState<string | null>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem("auth_token");
+        if (!isClient) return;
+        
+        const token = getLocalStorageItem("auth_token");
         if (!token) return;
 
         try {

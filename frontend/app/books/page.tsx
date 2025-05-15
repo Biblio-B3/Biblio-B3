@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BooksList } from "../components/books/BooksList";
 import { BookDetails } from "../components/books/BookDetails";
 
-export default function BooksPage() {
+function BooksContent() {
   const searchParams = useSearchParams();
   const bookId = searchParams.get("bookId");
 
@@ -16,5 +17,13 @@ export default function BooksPage() {
         <BooksList />
       )}
     </>
+  );
+}
+
+export default function BooksPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <BooksContent />
+    </Suspense>
   );
 }

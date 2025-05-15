@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Book, Pagination } from "./types";
-import { Plus } from "lucide-react";
+import { Plus, LogIn } from "lucide-react";
 import { AddBookDialog } from "../admin/AddBookDialog";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
+import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "./SearchBar";
 import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ import du hook
@@ -18,6 +20,7 @@ export const BooksList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const fetchWithAuth = useApiErrorHandler();
   const searchParams = useSearchParams();
   const role = useUserRole(); // ✅ récupération du rôle
@@ -36,6 +39,13 @@ export const BooksList = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const token = getLocalStorageItem("auth_token");
+    setIsAuthenticated(!!token);
+  }, []);
+
   const fetchBooks = async () => {
     const isSearching = debouncedSearchTerm.trim().length > 0;
 
@@ -46,11 +56,8 @@ export const BooksList = () => {
     console.log("📡 URL appelée depuis le frontend :", url);
 
     try {
-      const response = await fetchWithAuth(url, {
-        headers: {
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
-      });
+      // Utiliser authFetch pour les requêtes GET (pas besoin d'authentification)
+      const response = await fetch(url);
 
       const data = await response.json();
 
@@ -83,7 +90,7 @@ export const BooksList = () => {
       <div className="container mx-auto py-6">
         <div className="flex justify-between mb-4">
           <SearchBar onSearch={setSearchTerm} />
-          {role === "admin" && (
+          {isAuthenticated && role === "admin" && (
             <Button onClick={() => setIsAddBookDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
             </Button>
@@ -121,7 +128,7 @@ export const BooksList = () => {
         )}
       </div>
 
-      {role === "admin" && (
+      {isAuthenticated && role === "admin" && (
         <AddBookDialog
           isOpen={isAddBookDialogOpen}
           onOpenChange={setIsAddBookDialogOpen}

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Book, Users, Calendar, Star, BarChart2, Settings, LogOut, Clock, Home } from "lucide-react"
+import { Book, Users, Calendar, Star, BarChart2, Settings, LogOut, Clock, Home, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useLibrary } from "./LibraryContext";
+import { isClient, getLocalStorageItem, removeLocalStorageItem } from "../utils/isClient";
 
 const adminNavItems = [
   { href: "/components/admin/reservations", icon: Calendar, label: "Réservations" },
@@ -26,19 +27,32 @@ const userNavItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
   const { libraryName } = useLibrary();
 
   useEffect(() => {
-    setUserRole(localStorage.getItem("userRole"))
+    if (!isClient) return;
+    
+    const token = getLocalStorageItem("auth_token")
+    setIsAuthenticated(!!token)
+    setUserRole(getLocalStorageItem("userRole"))
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("userRole")
+    if (isClient) {
+      removeLocalStorageItem("userRole")
+      removeLocalStorageItem("auth_token")
+    }
     router.push("/login")
   }
 
-  const navItems = userRole === "admin" ? adminNavItems : userNavItems
+  const handleLogin = () => {
+    router.push("/login")
+  }
+
+  const navItems = !isAuthenticated ? [{ href: "/books", icon: Home, label: "Accueil" }] :
+                   userRole === "admin" ? adminNavItems : userNavItems
 
   return (
     <aside className="w-64 bg-gray-100 dark:bg-gray-800 p-4">
@@ -62,10 +76,17 @@ export default function Sidebar() {
         </ul>
       </nav>
       <div className="mt-auto pt-4">
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Déconnexion
-        </Button>
+        {isAuthenticated ? (
+          <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Déconnexion
+          </Button>
+        ) : (
+          <Button variant="outline" className="w-full" onClick={handleLogin}>
+            <LogIn className="mr-2 h-4 w-4" />
+            Connexion
+          </Button>
+        )}
       </div>
     </aside>
   )

@@ -2,7 +2,6 @@ import { app } from "../..";
 import { db } from "../../app/config/database";
 import { eq, sql, desc, ilike, and, or } from "drizzle-orm";
 import { books, selectBookSchema } from "../../db/schema/book";
-import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
 
@@ -58,7 +57,6 @@ app.get(
 
 app.get(
     "/books/:id",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const bookId = parseInt(req.params.id, 10);
@@ -83,7 +81,6 @@ app.get(
 
 app.get(
     "/books/search/:search",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const itemsPerPage = req.query.itemsPerPage

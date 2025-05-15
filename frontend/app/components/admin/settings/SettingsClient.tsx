@@ -9,15 +9,20 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
 import { CheckUserId } from "@/app/login/LoginForm"
 import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
+import { isClient, getLocalStorageItem, setLocalStorageItem } from "@/app/utils/isClient";
 
 export default function SettingsClient() {
   const [libraryName, setLibraryName] = useState("WardenPro Librario")
   const [emailNotifications, setEmailNotifications] = useState(true)
-  const [darkMode, setDarkMode] = useState(() => {
-    // Retrieve the dark mode preference from local storage
-    const savedMode = localStorage.getItem("darkMode");
-    return savedMode === "true"; // Convert string to boolean
-  });
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // Initialiser le mode sombre côté client uniquement
+  useEffect(() => {
+    if (isClient) {
+      const savedMode = localStorage.getItem("darkMode");
+      setDarkMode(savedMode === "true");
+    }
+  }, []);
   const { toast } = useToast()
   const { setTheme } = useTheme()
 
@@ -26,8 +31,10 @@ export default function SettingsClient() {
   }, [darkMode, setTheme]);
 
   useEffect(() => {
-    // Save the dark mode preference to local storage
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    if (isClient) {
+      // Save the dark mode preference to local storage
+      localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    }
   }, [darkMode]);
 
   const handleSave = async () => {
@@ -38,7 +45,7 @@ export default function SettingsClient() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "auth_token": localStorage.getItem("auth_token") || "",
+          "auth_token": getLocalStorageItem("auth_token") || "",
         },
         body: JSON.stringify({ newName }),
       });
@@ -70,7 +77,7 @@ export default function SettingsClient() {
 
   const handleLogoutAllDevices = async () => {
     try {
-      const token = localStorage.getItem("auth_token")
+      const token = getLocalStorageItem("auth_token")
       if (!token) {
         throw new Error("Aucun token trouvé")
       }
@@ -126,7 +133,7 @@ export default function SettingsClient() {
           variant="secondary"
           onClick={async () => {
             try {
-              const token = localStorage.getItem("auth_token")
+              const token = getLocalStorageItem("auth_token")
               if (!token) {
                 throw new Error("Aucun token trouvé")
               }

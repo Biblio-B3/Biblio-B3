@@ -5,6 +5,8 @@ import { Copy } from "./types";
 import { CopyCard } from "./CopyCard";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ ajout du hook
+import { authFetch } from "@/app/utils/authFetch";
+import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 
 type CopiesListProps = {
   bookId: string;
@@ -17,6 +19,14 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
   const [dataFetched, setDataFetched] = useState(false);
   const fetchWithAuth = useApiErrorHandler();
   const role = useUserRole(); // ✅ rôle récupéré
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const token = getLocalStorageItem("auth_token");
+    setIsAuthenticated(!!token);
+  }, []);
 
   useEffect(() => {
     if (!bookId || dataFetched) return;
@@ -26,11 +36,8 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     const fetchCopies = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithAuth(`/api/books/${bookId}/copy`, {
-          headers: {
-            auth_token: `${localStorage.getItem("auth_token")}`,
-          },
-        });
+        // Utiliser fetch standard pour les requêtes GET (pas besoin d'authentification)
+        const response = await fetch(`/api/books/${bookId}/copy`);
 
         if (!isMounted) return;
 
@@ -61,11 +68,9 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`/api/copy/${copyId}`, {
-        method: "DELETE",
-        headers: {
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
+      // Utiliser authFetch pour les requêtes DELETE (nécessite authentification)
+      const response = await authFetch(`/api/copy/${copyId}`, {
+        method: "DELETE"
       });
 
       if (response.ok) {
@@ -105,7 +110,7 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
             <CopyCard
               key={copy.copy_id}
               copy={copy}
-              {...(role === "admin" ? { onDelete: handleDeleteCopy } : {})} // ✅ condition
+              {...(isAuthenticated && role === "admin" ? { onDelete: handleDeleteCopy } : {})} // ✅ condition avec vérification d'authentification
             />
           ))}
         </div>
