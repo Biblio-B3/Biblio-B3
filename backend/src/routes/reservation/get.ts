@@ -39,9 +39,7 @@ app.get(
                 .execute();
 
             if (allReservations.length === 0) {
-                console.log("No reservations found");
-            } else {
-                console.log("Reservations data:", allReservations);
+                throw new AppError("No reservations found", 404);
             }
 
             const validatedReservations = allReservations.map((r) => {
