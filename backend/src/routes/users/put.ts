@@ -7,7 +7,7 @@ import { grantedAccessMiddleware } from "../../app/middlewares/verify_access_rig
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
 import { generateToken } from "../../app/middlewares/jwt";
-import { sendResetPasswordEmail } from "../../app/config/email";
+import { sendResetPasswordEmail } from "../../app/services/email";
 
 export async function updateUser(id: number, data: Request) {
     const validatedData = newUpdateUserSchema.parse(data);

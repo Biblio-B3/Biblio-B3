@@ -4,7 +4,7 @@ import { review, insertReviewSchema } from "../../db/schema/review";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
-import z from "zod"
+import z from "zod";
 
 app.post(
     "/reviews",

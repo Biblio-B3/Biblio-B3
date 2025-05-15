@@ -33,7 +33,6 @@ app.get(
     },
 );
 
-
 app.get(
     "/users/:id/historical",
     checkTokenMiddleware,
@@ -62,9 +61,10 @@ app.get(
         } catch (error) {
             if (error instanceof AppError) return next(error);
             next(
-                new Error("An error occurred while retrieving historical records.")
+                new Error(
+                    "An error occurred while retrieving historical records.",
+                ),
             );
         }
-    }
+    },
 );
-

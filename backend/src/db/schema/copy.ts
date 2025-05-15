@@ -35,4 +35,8 @@ export const fullupdateCopySchema = createInsertSchema(copy, {
     state: (schema) => schema.state,
 });
 
-export const updateCopySchema = fullupdateCopySchema.omit({ is_claimed: true, is_reserved: true, book_id: true });
+export const updateCopySchema = fullupdateCopySchema.omit({
+    is_claimed: true,
+    is_reserved: true,
+    book_id: true,
+});

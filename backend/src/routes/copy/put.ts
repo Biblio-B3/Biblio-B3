@@ -67,9 +67,13 @@ app.put(
                 .where(eq(reservation.copy_id, copyId))
                 .limit(1);
             if (!userReservation)
-                throw new AppError("Reservation not found for this copy.", 404, {
-                    id: copyId,
-                });
+                throw new AppError(
+                    "Reservation not found for this copy.",
+                    404,
+                    {
+                        id: copyId,
+                    },
+                );
 
             const [selectedCopy] = await db
                 .select({ is_claimed: copy.is_claimed })
@@ -85,27 +89,39 @@ app.put(
                     id: copyId,
                 });
 
-            const [updatedCopy, newHistorical] = await db.transaction(async (trx) => {
-                const [updatedCopy] = await trx
-                    .update(copy)
-                    .set({ is_claimed: true })
-                    .where(eq(copy.id, copyId))
-                    .returning();
-                if (!updatedCopy)
-                    throw new AppError("Copy not found or already claimed.", 404, {
-                        id: copyId,
-                    });
+            const [updatedCopy, newHistorical] = await db.transaction(
+                async (trx) => {
+                    const [updatedCopy] = await trx
+                        .update(copy)
+                        .set({ is_claimed: true })
+                        .where(eq(copy.id, copyId))
+                        .returning();
+                    if (!updatedCopy)
+                        throw new AppError(
+                            "Copy not found or already claimed.",
+                            404,
+                            {
+                                id: copyId,
+                            },
+                        );
 
-                const [newHistorical] = await trx.insert(historical).values({
-                    user_id: userReservation.user_id,
-                    book_id: updatedCopy.book_id,
-                    date_read: new Date(),
-                }).returning();
-                if (!newHistorical)
-                    throw new AppError("Error while adding to historical.", 500);
+                    const [newHistorical] = await trx
+                        .insert(historical)
+                        .values({
+                            user_id: userReservation.user_id,
+                            book_id: updatedCopy.book_id,
+                            date_read: new Date(),
+                        })
+                        .returning();
+                    if (!newHistorical)
+                        throw new AppError(
+                            "Error while adding to historical.",
+                            500,
+                        );
 
-                return [newHistorical, updatedCopy];
-            });
+                    return [newHistorical, updatedCopy];
+                },
+            );
 
             res.status(200).json({
                 message: "Copy successfully claimed.",
@@ -137,9 +153,13 @@ app.put(
                 .where(eq(reservation.copy_id, copyId))
                 .limit(1);
             if (!userReservation)
-                throw new AppError("Reservation not found for this copy.", 404, {
-                    id: copyId,
-                });
+                throw new AppError(
+                    "Reservation not found for this copy.",
+                    404,
+                    {
+                        id: copyId,
+                    },
+                );
 
             const [updatedCopy] = await db
                 .update(copy)

@@ -104,7 +104,7 @@ app.put(
             const selectedBook = await db
                 .select()
                 .from(books)
-                .where(eq(books.id, bookId));   
+                .where(eq(books.id, bookId));
             if (selectedBook.length === 0)
                 throw new AppError("Book not found.", 404, { id: bookId });
 
@@ -116,7 +116,10 @@ app.put(
                 .where(eq(books.id, bookId))
                 .returning();
             if (updatedBook.length === 0)
-                throw new AppError("No changes were made to the book data.", 400);
+                throw new AppError(
+                    "No changes were made to the book data.",
+                    400,
+                );
 
             res.status(200).json(updatedBook[0]);
         } catch (error) {

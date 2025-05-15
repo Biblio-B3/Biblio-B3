@@ -11,8 +11,12 @@ app.get(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const itemsPerPage = req.query.itemsPerPage ? parseInt(req.query.itemsPerPage as string, 10) : 30;
-            const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+            const itemsPerPage = req.query.itemsPerPage
+                ? parseInt(req.query.itemsPerPage as string, 10)
+                : 30;
+            const page = req.query.page
+                ? parseInt(req.query.page as string, 10)
+                : 1;
             const offset = (page - 1) * itemsPerPage;
 
             const paginatedBooks = await db
@@ -42,8 +46,8 @@ app.get(
                     itemsPerPage: itemsPerPage,
                     totalPages: totalPages,
                     hasNextPage: page < totalPages,
-                    hasPreviousPage: page > 1
-                }
+                    hasPreviousPage: page > 1,
+                },
             });
         } catch (error) {
             return next(
@@ -83,8 +87,12 @@ app.get(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const itemsPerPage = req.query.itemsPerPage ? parseInt(req.query.itemsPerPage as string, 10) : 30;
-            const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+            const itemsPerPage = req.query.itemsPerPage
+                ? parseInt(req.query.itemsPerPage as string, 10)
+                : 30;
+            const page = req.query.page
+                ? parseInt(req.query.page as string, 10)
+                : 1;
             const offset = (page - 1) * itemsPerPage;
 
             const searchTerm = req.params.search;
@@ -97,9 +105,9 @@ app.get(
                         eq(books.is_removed, false),
                         or(
                             ilike(books.title, `%${searchTerm}%`),
-                            ilike(books.author, `%${searchTerm}%`)
-                        )
-                    )
+                            ilike(books.author, `%${searchTerm}%`),
+                        ),
+                    ),
                 )
                 .orderBy(desc(books.publish_date))
                 .limit(itemsPerPage)
@@ -117,9 +125,9 @@ app.get(
                         eq(books.is_removed, false),
                         or(
                             ilike(books.title, `%${searchTerm}%`),
-                            ilike(books.author, `%${searchTerm}%`)
-                        )
-                    )
+                            ilike(books.author, `%${searchTerm}%`),
+                        ),
+                    ),
                 );
 
             const totalPages = Math.ceil(totalCount.count / itemsPerPage);
@@ -132,8 +140,8 @@ app.get(
                     itemsPerPage: itemsPerPage,
                     totalPages: totalPages,
                     hasNextPage: page < totalPages,
-                    hasPreviousPage: page > 1
-                }
+                    hasPreviousPage: page > 1,
+                },
             });
         } catch (error) {
             return next(
@@ -142,7 +150,6 @@ app.get(
         }
     },
 );
-
 
 /**
  * @swagger
