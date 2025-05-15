@@ -10,6 +10,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,9 +47,13 @@ export default function ReviewsClient() {
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
 
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
   useEffect(() => {
     if (!error && reviews.length > 0) {
-      setIsOpen(false);
+      handleClose();
     }
   }, [reviews, error]);
 
@@ -54,9 +66,13 @@ export default function ReviewsClient() {
             auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
-
-        if (!response.ok)
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError(null); // Clear any previous errors
+            return; // No reviews found, do not set an error
+          }
           throw new Error("Erreur lors de la récupération des évaluations");
+        }
 
         const data: Review[] = await response.json();
         setReviews(data);
@@ -94,8 +110,10 @@ export default function ReviewsClient() {
         <AlertDialog open={isOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Erreur</AlertDialogTitle>
-              <AlertDialogDescription>{error}</AlertDialogDescription>
+              <DialogTitle>Erreur</DialogTitle>
+              <DialogDescription>
+                {error}
+              </DialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setIsOpen(false)}>OK</AlertDialogAction>
@@ -105,19 +123,19 @@ export default function ReviewsClient() {
       )}
 
       {!error && reviews.length === 0 && (
-        <AlertDialog open={isOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Aucune évaluation trouvée</AlertDialogTitle>
-              <AlertDialogDescription>
-                {error || "Il n'y a actuellement aucune évaluation à afficher."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction onClick={() => setIsOpen(false)}>OK</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Dialog open={isOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Information</DialogTitle>
+              <DialogDescription>
+                Il n'y a actuellement aucune évaluation à afficher.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setIsOpen(false)}>OK</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Table>

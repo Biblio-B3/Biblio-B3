@@ -13,13 +13,22 @@ import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
 export default function SettingsClient() {
   const [libraryName, setLibraryName] = useState("WardenPro Librario")
   const [emailNotifications, setEmailNotifications] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    // Retrieve the dark mode preference from local storage
+    const savedMode = localStorage.getItem("darkMode");
+    return savedMode === "true"; // Convert string to boolean
+  });
   const { toast } = useToast()
   const { setTheme } = useTheme()
 
   useEffect(() => {
     setTheme(darkMode ? "dark" : "light")
-  }, [darkMode, setTheme])
+  }, [darkMode, setTheme]);
+
+  useEffect(() => {
+    // Save the dark mode preference to local storage
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+  }, [darkMode]);
 
   const handleSave = async () => {
     try {
