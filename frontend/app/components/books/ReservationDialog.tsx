@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { useUserRole } from "@/app/hooks/useUserRole";
 import { jwtDecode } from "jwt-decode";
+import { authFetch, useAuthFetch } from "@/app/utils/authFetch";
+import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 
 type ReservationDialogProps = {
   isOpen: boolean;
@@ -38,11 +40,14 @@ export const ReservationDialog = ({
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const fetchWithAuth = useApiErrorHandler();
   const role = useUserRole();
+  const authFetchHook = useAuthFetch();
 
   // ✅ Si c’est un user, on extrait directement son ID du token
   useEffect(() => {
+    if (!isClient) return;
+    
     if (role === "user") {
-      const token = localStorage.getItem("auth_token");
+      const token = getLocalStorageItem("auth_token");
       if (token) {
         try {
           const decoded = jwtDecode<JwtPayload>(token);
@@ -58,10 +63,8 @@ export const ReservationDialog = ({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/users", {
-          headers: {
-            auth_token: `${localStorage.getItem("auth_token")}`,
-          },
+        const response = await authFetch("/api/users", {
+          method: "GET"
         });
         if (response.ok) {
           const data = await response.json();
@@ -107,12 +110,8 @@ export const ReservationDialog = ({
     };
 
     try {
-      const response = await fetchWithAuth("/api/reservations", {
+      const response = await authFetchHook("/api/reservations", {
         method: "POST",
-        headers: {
-          auth_token: `${localStorage.getItem("auth_token")}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
       if (response.ok) {

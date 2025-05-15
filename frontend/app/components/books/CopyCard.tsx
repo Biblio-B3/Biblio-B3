@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy } from "./types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ReservationDialog } from "./ReservationDialog";
 import { useUserRole } from "@/app/hooks/useUserRole";
+import { LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 
 type CopyCardProps = {
   copy: Copy;
@@ -17,7 +20,16 @@ type CopyCardProps = {
 
 export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const role = useUserRole();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const token = getLocalStorageItem("auth_token");
+    setIsAuthenticated(!!token);
+  }, []);
 
   const getStateColor = (state: string) => {
     switch (state.toLowerCase()) {
@@ -121,12 +133,22 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
         )}
 
         {!copy.is_reserved && (
-          <Button
-            className="mt-4 w-full"
-            onClick={() => setReservationDialogOpen(true)}
-          >
-            Réserver cette copie
-          </Button>
+          isAuthenticated ? (
+            <Button
+              className="mt-4 w-full"
+              onClick={() => setReservationDialogOpen(true)}
+            >
+              Réserver cette copie
+            </Button>
+          ) : (
+            <Button
+              className="mt-4 w-full"
+              variant="outline"
+              onClick={() => router.push("/login")}
+            >
+              <LogIn className="mr-2 h-4 w-4" /> Se connecter pour réserver
+            </Button>
+          )
         )}
       </Card>
 

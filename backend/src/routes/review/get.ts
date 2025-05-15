@@ -50,7 +50,6 @@ app.get(
 
 app.get(
     "/books/:id/reviews",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const bookId = parseInt(req.params.id, 10);
