@@ -15,7 +15,11 @@ app.post(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            if (!req.body.copy_id || !req.body.final_date || !req.body.user_id) {
+            if (
+                !req.body.copy_id ||
+                !req.body.final_date ||
+                !req.body.user_id
+            ) {
                 throw new AppError(
                     "Missing required fields: copy_id, final_date, user_id.",
                     400,
@@ -25,15 +29,18 @@ app.post(
             const today = new Date();
             const maxDate = new Date();
             maxDate.setDate(today.getDate() + 28);
-            
+
             const finalDate = new Date(req.body.final_date);
 
             console.log(today);
             console.log(finalDate);
             console.log(maxDate);
-            
+
             if (finalDate > maxDate) {
-                throw new AppError("Final date must be within 28 days from today.", 400);
+                throw new AppError(
+                    "Final date must be within 28 days from today.",
+                    400,
+                );
             }
 
             const validatedData = insertReservationSchema.parse(req.body);

@@ -115,7 +115,9 @@ app.get(
             res.status(200).json(validated);
         } catch (error) {
             if (error instanceof AppError) return next(error);
-            next(new AppError("Error while retrieving reservation.", 500, error));
+            next(
+                new AppError("Error while retrieving reservation.", 500, error),
+            );
         }
-    }
+    },
 );

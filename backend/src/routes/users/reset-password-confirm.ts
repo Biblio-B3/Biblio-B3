@@ -57,7 +57,13 @@ app.post(
             });
         } catch (error) {
             if (error instanceof AppError) return next(error);
-            next(new AppError("Erreur lors de la réinitialisation du mot de passe", 500, error));
+            next(
+                new AppError(
+                    "Erreur lors de la réinitialisation du mot de passe",
+                    500,
+                    error,
+                ),
+            );
         }
-    }
-); 
+    },
+);

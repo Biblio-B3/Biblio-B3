@@ -38,10 +38,14 @@ app.get(
         } catch (error) {
             if (error instanceof AppError) return next(error);
             return next(
-                new AppError("Internal error during reviews retrieval", 500, error)
+                new AppError(
+                    "Internal error during reviews retrieval",
+                    500,
+                    error,
+                ),
             );
         }
-    }
+    },
 );
 
 app.get(
@@ -75,9 +79,13 @@ app.get(
                 throw new AppError("Review not found.", 404);
 
             res.status(200).json(foundReview);
-          
-            const itemsPerPage = req.query.itemsPerPage ? parseInt(req.query.itemsPerPage as string, 10) : 30;
-            const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+
+            const itemsPerPage = req.query.itemsPerPage
+                ? parseInt(req.query.itemsPerPage as string, 10)
+                : 30;
+            const page = req.query.page
+                ? parseInt(req.query.page as string, 10)
+                : 1;
             const offset = (page - 1) * itemsPerPage;
 
             const paginatedReviews = await db
@@ -124,15 +132,18 @@ app.get(
                     itemsPerPage: itemsPerPage,
                     totalPages: totalPages,
                     hasNextPage: page < totalPages,
-                    hasPreviousPage: page > 1
-                }
+                    hasPreviousPage: page > 1,
+                },
             });
-
         } catch (error) {
             if (error instanceof AppError) return next(error);
             return next(
-                new AppError("Internal error during review retrieval", 500, error)
+                new AppError(
+                    "Internal error during review retrieval",
+                    500,
+                    error,
+                ),
             );
         }
-    }
+    },
 );

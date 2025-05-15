@@ -44,9 +44,13 @@ export function grantedAccessMiddleware(
 
             if (!resource || resource.length === 0 || !resource[0])
                 return next(
-                    new AppError(`Resource with ID ${resourceId} not found.`, 404, {
-                        id: resourceId,
-                    }),
+                    new AppError(
+                        `Resource with ID ${resourceId} not found.`,
+                        404,
+                        {
+                            id: resourceId,
+                        },
+                    ),
                 );
 
             const isOwner = resource[0].user_id === userIdFromToken;

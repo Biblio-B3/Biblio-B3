@@ -35,7 +35,9 @@ app.get(
         try {
             const bookId = parseInt(req.params.id, 10);
             if (isNaN(bookId) || bookId <= 0)
-                throw new AppError("Invalid copy id provided.", 400, { id: bookId });
+                throw new AppError("Invalid copy id provided.", 400, {
+                    id: bookId,
+                });
 
             const copies = await db
                 .select({
@@ -45,7 +47,9 @@ app.get(
                     is_claimed: copy.is_claimed,
                     book_id: copy.book_id,
                     final_date: reservation.final_date,
-                    review_condition: sql`array_agg(${review.condition})`.as("review_condition"),
+                    review_condition: sql`array_agg(${review.condition})`.as(
+                        "review_condition",
+                    ),
                 })
                 .from(copy)
                 .leftJoin(review, eq(copy.id, review.copy_id))
@@ -57,19 +61,27 @@ app.get(
                     copy.is_reserved,
                     copy.is_claimed,
                     copy.book_id,
-                    reservation.final_date
+                    reservation.final_date,
                 );
 
             if (!copies || copies.length === 0) {
-                throw new AppError("No copies found for this book.", 404, { id: bookId });
+                throw new AppError("No copies found for this book.", 404, {
+                    id: bookId,
+                });
             }
 
             res.status(200).json(copies);
         } catch (error) {
             if (error instanceof AppError) return next(error);
-            return next(new AppError("Error while retrieving copies for book.", 500, error));
+            return next(
+                new AppError(
+                    "Error while retrieving copies for book.",
+                    500,
+                    error,
+                ),
+            );
         }
-    }
+    },
 );
 
 app.get(
@@ -90,7 +102,9 @@ app.get(
                     is_reserved: copy.is_reserved,
                     is_claimed: copy.is_claimed,
                     book_id: copy.book_id,
-                    review_condition: sql`array_agg(${review.condition})`.as("review_condition"),
+                    review_condition: sql`array_agg(${review.condition})`.as(
+                        "review_condition",
+                    ),
                 })
                 .from(copy)
                 .leftJoin(review, eq(copy.id, review.copy_id))
@@ -100,15 +114,16 @@ app.get(
                     copy.state,
                     copy.is_reserved,
                     copy.is_claimed,
-                    copy.book_id
+                    copy.book_id,
                 );
 
             if (!copies || copies.length === 0) {
-                throw new AppError("No copies found for this book.", 404, { id: bookId });
+                throw new AppError("No copies found for this book.", 404, {
+                    id: bookId,
+                });
             }
 
             res.status(200).json(copies);
-
         } catch (error) {
             if (error instanceof AppError) return next(error);
             return next(

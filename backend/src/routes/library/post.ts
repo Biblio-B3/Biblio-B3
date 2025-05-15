@@ -22,10 +22,7 @@ app.post(
                 .set(ValidatedLibraryData)
                 .returning();
             if (!newLibrary)
-                throw new AppError(
-                    "Failed to add library data.",
-                    500,
-                );
+                throw new AppError("Failed to add library data.", 500);
 
             res.status(200).json(newLibrary);
         } catch (error) {
