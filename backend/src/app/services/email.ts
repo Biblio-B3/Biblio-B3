@@ -10,12 +10,20 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export async function sendResetPasswordEmail(to: string, resetToken: string) {
+export async function sendResetPasswordEmail(userId: number, resetToken: string) {
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user || user.length === 0) {
+        console.log(`User not found for reset password email: ${userId}`);
+        return false;
+    }
+
+    const userEmail = user[0].email;
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
         from: process.env.SMTP_USER,
-        to: to,
+        to: userEmail,
         subject: "Réinitialisation de votre mot de passe",
         html: `
             <h1>Réinitialisation de mot de passe</h1>
@@ -36,10 +44,19 @@ export async function sendResetPasswordEmail(to: string, resetToken: string) {
     }
 }
 
-export async function sendUnclaimedReservationReminder(to: string, reservationId: number) {
+export async function sendUnclaimedReservationReminder(userId: number, reservationId: number) {
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user || user.length === 0 || !user[0].email_notification) {
+        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        return false;
+    }
+
+    const userEmail = user[0].email;
+
     const mailOptions = {
         from: process.env.SMTP_USER,
-        to: to,
+        to: userEmail,
         subject: "Rappel: Réservation non récupérée",
         html: `
             <h1>Rappel: Réservation non récupérée</h1>
@@ -58,15 +75,24 @@ export async function sendUnclaimedReservationReminder(to: string, reservationId
     }
 }
 
-export async function sendExpiringReservationReminder(to: string, reservationId: number, finalDate: Date) {
+export async function sendExpiringReservationReminder(userId: number, reservationId: number, finalDate: Date) {
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user || user.length === 0 || !user[0].email_notification) {
+        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        return false;
+    }
+
+    const userEmail = user[0].email;
+
     const mailOptions = {
         from: process.env.SMTP_USER,
-        to: to,
+        to: userEmail,
         subject: "Rappel: Réservation sur le point d'expirer",
         html: `
             <h1>Rappel: Réservation sur le point d'expirer</h1>
             <p>Bonjour,</p>
-            <p>Vous avez une réservation (ID: ${reservationId}) qui expire le ${finalDate.toLocaleDateString('fr-FR')}.</p>
+            <p>Vous avez une réservation (ID: ${reservationId}) qui expire le ${finalDate.toLocaleDateString("fr-FR")}.</p>
             <p>Merci de la récupérer avant cette date.</p>
         `,
     };
@@ -76,6 +102,40 @@ export async function sendExpiringReservationReminder(to: string, reservationId:
         return true;
     } catch (error) {
         console.error("Erreur lors de l'envoi de l'email de rappel pour expiration:", error);
+        throw error;
+    }
+}
+import { db } from "../config/database";
+import { users } from "../../db/schema/users";
+import { eq } from "drizzle-orm";
+
+export async function sendExpiredReservationEmail(userId: number, bookTitle: string) {
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user || user.length === 0 || !user[0].email_notification) {
+        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        return false;
+    }
+
+    const userEmail = user[0].email;
+
+    const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: userEmail,
+        subject: "Votre réservation a expiré",
+        html: `
+            <h1>Votre réservation a expiré</h1>
+            <p>Bonjour,</p>
+            <p>Nous vous informons que votre réservation pour le livre "${bookTitle}" a expiré car elle n'a pas été récupérée à temps.</p>
+            <p>Vous pouvez effectuer une nouvelle réservation si le livre est disponible.</p>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error("Erreur lors de l'envoi de l'email de réservation expirée:", error);
         throw error;
     }
 }

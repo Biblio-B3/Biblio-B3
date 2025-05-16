@@ -65,7 +65,7 @@ app.put(
                     }
 
                     const resetToken = await generateToken(userId, "reset");
-                    await sendResetPasswordEmail(user.email, resetToken);
+                    await sendResetPasswordEmail(userId, resetToken);
 
                     res.status(200).json({
                         message: "Email de réinitialisation envoyé avec succès",
