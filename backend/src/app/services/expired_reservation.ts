@@ -1,6 +1,9 @@
 import { lt, eq, and, inArray } from "drizzle-orm";
 import { reservation } from "../../db/schema/reservation";
 import { copy } from "../../db/schema/copy";
+import { books } from "../../db/schema/book";
+import { users } from "../../db/schema/users";
+import { sendExpiredReservationEmail } from "./email";
 import { db } from "../config/database";
 import { logMessage } from "../utils/logger";
 
@@ -13,9 +16,14 @@ export async function expired_reservation() {
                 reservationId: reservation.id,
                 reservationDate: reservation.reservation_date,
                 copyId: copy.id,
+                userId: reservation.user_id,
+                bookTitle: books.title,
+                userEmail: users.email,
             })
             .from(reservation)
             .innerJoin(copy, eq(copy.id, reservation.copy_id))
+            .innerJoin(books, eq(books.id, copy.book_id))
+            .innerJoin(users, eq(users.id, reservation.user_id))
             .where(
                 and(
                     lt(reservation.reservation_date, twoDaysAgo),
@@ -24,6 +32,15 @@ export async function expired_reservation() {
             );
 
         if (expiredReservations.length > 0) {
+            for (const reservation of expiredReservations) {
+                try {
+                    await sendExpiredReservationEmail(reservation.userId, reservation.bookTitle);
+                    logMessage(`Email sent to user ${reservation.userId} for expired reservation ${reservation.reservationId}`);
+                } catch (emailError) {
+                    console.error(`Failed to send email for expired reservation ${reservation.reservationId}:`, emailError);
+                }
+            }
+
             logMessage(
                 "Found expired reservations. Removing them from the database ...",
             );

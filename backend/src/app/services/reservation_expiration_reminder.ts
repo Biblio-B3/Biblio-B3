@@ -13,6 +13,7 @@ export async function reservation_expiration_reminder() {
         const expiringReservations = await db
             .select({
                 reservationId: reservation.id,
+                userId: reservation.user_id,
                 userEmail: users.email,
                 finalDate: reservation.final_date,
             })
@@ -30,7 +31,7 @@ export async function reservation_expiration_reminder() {
             logMessage("Found reservations expiring soon. Sending reminders...");
 
             for (const reservation of expiringReservations) {
-                await sendExpiringReservationReminder(reservation.userEmail, reservation.reservationId, reservation.finalDate);
+                await sendExpiringReservationReminder(reservation.userId, reservation.reservationId, reservation.finalDate);
             }
 
             logMessage("Reminders sent successfully.");

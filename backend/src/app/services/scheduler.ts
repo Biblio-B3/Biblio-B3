@@ -8,17 +8,14 @@ import { reservation_expiration_reminder } from "./reservation_expiration_remind
 import { logMessage } from "../utils/logger";
 
 export function startScheduler() {
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("0 6-23 * * *", async () => {
         logMessage("Executing the 'expired_reservation' task.");
         await expired_reservation();
     });
 
-    cron.schedule("0 */12 * * *", async () => {
+    cron.schedule("0 6-23/3 * * *", async () => {
         logMessage("Executing the 'unclaimed_reservation_reminder' task.");
         await unclaimed_reservation_reminder();
-    });
-
-    cron.schedule("0 9 * * *", async () => {
         logMessage("Executing the 'reservation_expiration_reminder' task.");
         await reservation_expiration_reminder();
     });
