@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 export const rolesEnum = pgEnum("roles", ["user", "admin"]);
@@ -9,6 +9,7 @@ export const users = pgTable("users", {
     first_name: text("first_name").notNull(),
     password: text("password").notNull(),
     email: text("email").unique().notNull(),
+    email_notification: boolean("email_notification").default(true).notNull(),
     bio: text("bio"),
     roles: rolesEnum("roles").notNull(),
     created_at: timestamp("created_at").defaultNow().notNull(),
@@ -63,6 +64,7 @@ const updateUserSchema = createInsertSchema(users, {
             .max(50, { message: "Must be 50 characters maximum." })
             .regex(/^[a-zA-Z ]+$/, { message: "Must be only letters." }),
     email: (schema) => schema.email.email().optional(),
+    email_notification: (schema) => schema.email_notification.optional(),
     password: (schema) =>
         schema.password
             .min(8, { message: "Must be 8 or more characters." })
