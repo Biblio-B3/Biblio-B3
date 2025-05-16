@@ -69,6 +69,38 @@ app.get(
     },
 );
 
+app.get(
+    "/roles/:id",
+    checkTokenMiddleware,
+    grantedAccessMiddleware("admin"),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = parseInt(req.params.id, 10);
+            if (isNaN(userId) || userId <= 0)
+                throw new AppError("Invalid user ID provided.", 400);
+
+            const userRoles = await db
+                .select({ roles: users.roles })
+                .from(users)
+                .where(eq(users.id, userId));
+            if (userRoles.length === 0) {
+                throw new AppError(`User with ID ${userId} not found`, 404);
+            } else {
+                res.status(200).json(userRoles[0]);
+            }
+        } catch (error) {
+            if (error instanceof AppError) return next(error);
+            next(
+                new AppError(
+                    "Internal error during user roles retrieval",
+                    500,
+                    error,
+                ),
+            );
+        }
+    },
+);
+
 /**
  * @swagger
  * /users:
