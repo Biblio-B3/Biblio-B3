@@ -13,9 +13,15 @@ import { isClient, getLocalStorageItem, setLocalStorageItem } from "@/app/utils/
 
 export default function SettingsClient() {
   const [libraryName, setLibraryName] = useState("WardenPro Librario")
-  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [emailNotifications, setEmailNotifications] = useState(false) // Initialize to false, will fetch actual value
   const [darkMode, setDarkMode] = useState(false);
-  
+
+  const { toast } = useToast()
+  const { setTheme } = useTheme()
+  const fetchWithAuth = useApiErrorHandler();
+  const token = getLocalStorageItem("auth_token");
+  const userId = token ? CheckUserId(token) : null;
+
   // Initialiser le mode sombre côté client uniquement
   useEffect(() => {
     if (isClient) {
@@ -23,8 +29,6 @@ export default function SettingsClient() {
       setDarkMode(savedMode === "true");
     }
   }, []);
-  const { toast } = useToast()
-  const { setTheme } = useTheme()
 
   useEffect(() => {
     setTheme(darkMode ? "dark" : "light")
@@ -37,6 +41,72 @@ export default function SettingsClient() {
     }
   }, [darkMode]);
 
+  // Fetch initial email notification preference
+  useEffect(() => {
+    const fetchEmailNotificationPreference = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await fetchWithAuth(`/api/users/${userId}`, {
+          method: "GET",
+          headers: {
+            "auth_token": token,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch email notification preference");
+        }
+
+        const userData = await response.json();
+        setEmailNotifications(userData.email_notification);
+      } catch (error) {
+        console.error("Error fetching email notification preference:", error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors du chargement de votre préférence de notification.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchEmailNotificationPreference();
+  }, [userId, fetchWithAuth, token, toast]);
+
+
+  const handleEmailNotificationsChange = async (checked: boolean) => {
+    if (!userId) return;
+
+    try {
+      const response = await fetchWithAuth(`/api/users/${userId}/email-notification`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "auth_token": token } : {}),
+        },
+        body: JSON.stringify({ email_notification: checked }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update email notification preference");
+      }
+
+      setEmailNotifications(checked);
+
+      toast({
+        title: "Préférence de notification mise à jour",
+        description: "Votre préférence de notification par email a été mise à jour avec succès.",
+      });
+    } catch (error) {
+      console.error("Error updating email notification preference:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour de votre préférence de notification.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     try {
       const newName = libraryName.trim();
@@ -45,7 +115,7 @@ export default function SettingsClient() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "auth_token": getLocalStorageItem("auth_token") || "",
+          ...(token ? { "auth_token": token } : {}),
         },
         body: JSON.stringify({ newName }),
       });
@@ -73,8 +143,6 @@ export default function SettingsClient() {
     }
   }
 
-  const fetchWithAuth = useApiErrorHandler();
-
   const handleLogoutAllDevices = async () => {
     try {
       const token = getLocalStorageItem("auth_token")
@@ -87,7 +155,7 @@ export default function SettingsClient() {
       const response = await fetchWithAuth(`/api/logout/${userId}`, {
         method: "POST",
         headers: {
-          auth_token: token
+          ...(token ? { "auth_token": token } : {})
         }
       })
 
@@ -118,7 +186,7 @@ export default function SettingsClient() {
       </div>
 
       <div className="flex items-center space-x-2">
-        <Switch id="emailNotifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+        <Switch id="emailNotifications" checked={emailNotifications} onCheckedChange={handleEmailNotificationsChange} />
         <Label htmlFor="emailNotifications">Activer les notifications par email</Label>
       </div>
 
@@ -144,7 +212,7 @@ export default function SettingsClient() {
                 method: "PUT",
                 headers: {
                   "Content-Type": "application/json",
-                  "auth_token": token
+                  ...(token ? { "auth_token": token } : {}),
                 },
                 body: JSON.stringify({ resetPassword: true })
               })
@@ -158,7 +226,6 @@ export default function SettingsClient() {
                 title: "Email envoyé",
                 description: "Un email de réinitialisation de mot de passe a été envoyé à votre adresse email.",
               })
-
             } catch (error: any) {
               console.error("⚠️ Erreur lors de la réinitialisation du mot de passe :", error)
               toast({
