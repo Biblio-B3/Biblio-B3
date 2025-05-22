@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 
+import { toast } from "@/components/ui/use-toast";
+
 type Reservation = {
   id: number;
   user_id: number;
@@ -51,13 +53,21 @@ export default function ReservationsClient() {
             auth_token: `${localStorage.getItem("auth_token")}`,
           },
         });
-        if (!response.ok)
-          throw new Error("Erreur lors de la récupération des réservations");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Erreur lors de la récupération des réservations");
+        }
 
         const data: Reservation[] = await response.json();
         setReservations(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur inconnue");
+        const errorMessage = err instanceof Error ? err.message : "Erreur inconnue";
+        setError(errorMessage);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: errorMessage,
+        });
       }
     };
 
@@ -132,7 +142,13 @@ export default function ReservationsClient() {
     }
   });
 
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (filteredReservations.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <p className="text-gray-500">Aucune réservation trouvée</p>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRouter } from "next/navigation";
+import { toast } from "@/components/ui/use-toast";
 
 type User = {
   id: number;
@@ -15,6 +16,7 @@ type User = {
   created_at: string;
   bio: string;
 };
+
 
 export default function UsersClient() {
   const [users, setUsers] = useState<User[]>([]);
@@ -32,12 +34,21 @@ export default function UsersClient() {
           },
         });
 
-        if (!response.ok) throw new Error("Erreur lors de la récupération des utilisateurs");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Erreur lors de la récupération des utilisateurs");
+        }
 
         const data: User[] = await response.json();
         setUsers(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur inconnue");
+        const errorMessage = err instanceof Error ? err.message : "Erreur inconnue";
+        setError(errorMessage);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: errorMessage,
+        });
       } finally {
         setLoading(false);
       }
@@ -71,7 +82,13 @@ export default function UsersClient() {
   };
 
   if (loading) return <p>Chargement des utilisateurs...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (users.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <p className="text-gray-500">Aucun utilisateur trouvé</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -103,6 +120,7 @@ export default function UsersClient() {
           ))}
         </TableBody>
       </Table>
+
     </>
   );
 }
