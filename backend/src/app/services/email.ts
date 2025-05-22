@@ -10,8 +10,15 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export async function sendResetPasswordEmail(userId: number, resetToken: string) {
-    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+export async function sendResetPasswordEmail(
+    userId: number,
+    resetToken: string,
+) {
+    const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
     if (!user || user.length === 0) {
         console.log(`User not found for reset password email: ${userId}`);
@@ -44,11 +51,20 @@ export async function sendResetPasswordEmail(userId: number, resetToken: string)
     }
 }
 
-export async function sendUnclaimedReservationReminder(userId: number, reservationId: number) {
-    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+export async function sendUnclaimedReservationReminder(
+    userId: number,
+    reservationId: number,
+) {
+    const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        console.log(
+            `Email notification disabled for user ${userId} or user not found.`,
+        );
         return false;
     }
 
@@ -75,11 +91,21 @@ export async function sendUnclaimedReservationReminder(userId: number, reservati
     }
 }
 
-export async function sendExpiringReservationReminder(userId: number, reservationId: number, finalDate: Date) {
-    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+export async function sendExpiringReservationReminder(
+    userId: number,
+    reservationId: number,
+    finalDate: Date,
+) {
+    const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        console.log(
+            `Email notification disabled for user ${userId} or user not found.`,
+        );
         return false;
     }
 
@@ -101,7 +127,10 @@ export async function sendExpiringReservationReminder(userId: number, reservatio
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error("Erreur lors de l'envoi de l'email de rappel pour expiration:", error);
+        console.error(
+            "Erreur lors de l'envoi de l'email de rappel pour expiration:",
+            error,
+        );
         throw error;
     }
 }
@@ -109,11 +138,20 @@ import { db } from "../config/database";
 import { users } from "../../db/schema/users";
 import { eq } from "drizzle-orm";
 
-export async function sendExpiredReservationEmail(userId: number, bookTitle: string) {
-    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+export async function sendExpiredReservationEmail(
+    userId: number,
+    bookTitle: string,
+) {
+    const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(`Email notification disabled for user ${userId} or user not found.`);
+        console.log(
+            `Email notification disabled for user ${userId} or user not found.`,
+        );
         return false;
     }
 
@@ -135,7 +173,10 @@ export async function sendExpiredReservationEmail(userId: number, bookTitle: str
         await transporter.sendMail(mailOptions);
         return true;
     } catch (error) {
-        console.error("Erreur lors de l'envoi de l'email de réservation expirée:", error);
+        console.error(
+            "Erreur lors de l'envoi de l'email de réservation expirée:",
+            error,
+        );
         throw error;
     }
 }

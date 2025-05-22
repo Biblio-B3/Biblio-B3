@@ -34,10 +34,18 @@ export async function expired_reservation() {
         if (expiredReservations.length > 0) {
             for (const reservation of expiredReservations) {
                 try {
-                    await sendExpiredReservationEmail(reservation.userId, reservation.bookTitle);
-                    logMessage(`Email sent to user ${reservation.userId} for expired reservation ${reservation.reservationId}`);
+                    await sendExpiredReservationEmail(
+                        reservation.userId,
+                        reservation.bookTitle,
+                    );
+                    logMessage(
+                        `Email sent to user ${reservation.userId} for expired reservation ${reservation.reservationId}`,
+                    );
                 } catch (emailError) {
-                    console.error(`Failed to send email for expired reservation ${reservation.reservationId}:`, emailError);
+                    console.error(
+                        `Failed to send email for expired reservation ${reservation.reservationId}:`,
+                        emailError,
+                    );
                 }
             }
 
