@@ -64,12 +64,14 @@ const updateUserSchema = createInsertSchema(users, {
         schema.last_name
             .min(2, { message: "Must be 2 or more characters." })
             .max(50, { message: "Must be 50 characters maximum." })
-            .regex(/^[a-zA-Z ]+$/, { message: "Must be only letters." }),
+            .regex(/^[a-zA-Z ]+$/, { message: "Must be only letters." })
+            .optional(),
     first_name: (schema) =>
         schema.first_name
             .min(2, { message: "Must be 2 or more characters." })
             .max(50, { message: "Must be 50 characters maximum." })
-            .regex(/^[a-zA-Z ]+$/, { message: "Must be only letters." }),
+            .regex(/^[a-zA-Z ]+$/, { message: "Must be only letters." })
+            .optional(),
     email: (schema) => schema.email.email().optional(),
     email_notification: (schema) => schema.email_notification.optional(),
     password: (schema) =>
