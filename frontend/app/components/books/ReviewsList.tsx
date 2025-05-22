@@ -20,19 +20,27 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
 
   const itemsPerPage = 10;
 
+  // Protéger contre la boucle
+  useEffect(() => {
+    if (
+      pagination &&
+      pagination.totalPages > 0 &&
+      currentPage > pagination.totalPages
+    ) {
+      setCurrentPage(pagination.totalPages);
+    }
+  }, [pagination, currentPage]);
+
   useEffect(() => {
     if (!bookId) return;
-
-    if (pagination && currentPage > pagination.totalPages) {
-      setCurrentPage(1);
-      return;
-    }
 
     let isMounted = true;
 
     const fetchReviews = async () => {
       try {
         setLoading(true);
+        setError(null);
+
         const response = await fetchWithAuth(
           `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`,
           {
@@ -46,33 +54,40 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
 
         if (!response.ok) {
           if (response.status === 404) {
-            if (isMounted) {
-              setError("Aucun avis trouvé.");
-              setLoading(false);
-            }
-          }
-          if (isMounted) {
+            // Cas avec 0 review : arrêter la pagination
+            setReviews([]);
+            setPagination({
+              page: 1,
+              total: 0,
+              totalPages: 1,
+              hasNextPage: false,
+              hasPreviousPage: false,
+              itemsPerPage: itemsPerPage,
+            });
+            setLoading(false);
+            return;
+          } else {
             setError(`Erreur: ${response.statusText}`);
+            setLoading(false);
+            return;
           }
-          setLoading(false);
-          return;
         }
 
         const data = await response.json();
 
-        const reviewsData = data.data;
-
         const reviewsWithUserInfo = await Promise.all(
-          reviewsData.map(async (review: Review) => {
+          data.data.map(async (review: Review) => {
             try {
-              const userResponse = await fetchWithAuth(`/api/users/${review.user_id}`, {
-                headers: {
-                  auth_token: `${localStorage.getItem("auth_token")}`,
-                },
-              });
+              const userResponse = await fetchWithAuth(
+                `/api/users/${review.user_id}`,
+                {
+                  headers: {
+                    auth_token: `${localStorage.getItem("auth_token")}`,
+                  },
+                }
+              );
               if (userResponse.ok) {
                 const userData = await userResponse.json();
-
                 return {
                   ...review,
                   user: {
@@ -81,9 +96,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
                   },
                 };
               }
-            } catch (error) {
-              console.error("Erreur lors de la récupération des données utilisateur:", error);
-            }
+            } catch { }
             return {
               ...review,
               user: {
@@ -98,19 +111,12 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
           setReviews(reviewsWithUserInfo);
           setPagination(data.pagination);
         }
-        if (pagination && pagination.totalPages > 0 && currentPage > pagination.totalPages) {
-          setCurrentPage(1);
-          return;
-        }
-      } catch (error) {
+      } catch {
         if (isMounted) {
-          console.error("Erreur lors de la récupération des avis:", error);
           setError("Erreur lors de la récupération des avis");
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -118,7 +124,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     return () => {
       isMounted = false;
     };
-  }, [bookId, currentPage, fetchWithAuth, itemsPerPage]);
+  }, [bookId, currentPage, fetchWithAuth]);
 
   if (loading && !reviews.length) {
     return <div className="text-center py-4">Chargement des avis...</div>;
@@ -141,7 +147,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
             ))}
           </div>
 
-          {pagination && (
+          {pagination && pagination.totalPages > 1 && (
             <div className="flex justify-center items-center mt-6 gap-4">
               <Button
                 variant="outline"
