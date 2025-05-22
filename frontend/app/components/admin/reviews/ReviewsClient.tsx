@@ -110,10 +110,10 @@ export default function ReviewsClient() {
         <AlertDialog open={isOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <DialogTitle>Erreur</DialogTitle>
-              <DialogDescription>
+              <AlertDialogTitle>Erreur</AlertDialogTitle>
+              <AlertDialogDescription>
                 {error}
-              </DialogDescription>
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogAction onClick={() => setIsOpen(false)}>OK</AlertDialogAction>
