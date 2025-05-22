@@ -15,7 +15,8 @@ const adminNavItems = [
   { href: "/components/admin/users", icon: Users, label: "Utilisateurs" },
   { href: "/components/admin/reviews", icon: Star, label: "Évaluations" },
   { href: "/components/admin/stats", icon: BarChart2, label: "Statistiques" },
-  { href: "/components/admin/settings", icon: Settings, label: "Paramètres" }
+  { href: "/components/admin/settings", icon: Settings, label: "Paramètres" },
+  { href: "/components/admin/profile", icon: Home, label: "Profil" }
 ]
 
 const userNavItems = [
@@ -33,11 +34,12 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (!isClient) return;
-    
-    const token = getLocalStorageItem("auth_token")
-    setIsAuthenticated(!!token)
-    setUserRole(getLocalStorageItem("userRole"))
-  }, [])
+
+    const token = getLocalStorageItem("auth_token");
+    setIsAuthenticated(!!token);
+    setUserRole(getLocalStorageItem("userRole"));
+  }, []);
+
 
   const handleLogout = () => {
     if (isClient) {
@@ -52,7 +54,7 @@ export default function Sidebar() {
   }
 
   const navItems = !isAuthenticated ? [{ href: "/books", icon: Home, label: "Accueil" }] :
-                   userRole === "admin" ? adminNavItems : userNavItems
+    userRole === "admin" ? adminNavItems : userNavItems
 
   return (
     <aside className="w-64 bg-gray-100 dark:bg-gray-800 p-4">

@@ -32,7 +32,7 @@ app.post(
             try {
                 const resetToken = await generateToken(user.id, "reset");
 
-                await sendResetPasswordEmail(user.email, resetToken);
+                await sendResetPasswordEmail(user.id, resetToken);
             } catch (error) {
                 console.error("Erreur lors de l'envoi de l'email:", error);
             }
