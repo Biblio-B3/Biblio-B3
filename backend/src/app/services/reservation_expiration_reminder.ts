@@ -8,7 +8,9 @@ import { sendExpiringReservationReminder } from "./email";
 
 export async function reservation_expiration_reminder() {
     try {
-        const oneDayBeforeExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const oneDayBeforeExpiration = new Date(
+            Date.now() + 24 * 60 * 60 * 1000,
+        );
 
         const expiringReservations = await db
             .select({
@@ -28,10 +30,16 @@ export async function reservation_expiration_reminder() {
             );
 
         if (expiringReservations.length > 0) {
-            logMessage("Found reservations expiring soon. Sending reminders...");
+            logMessage(
+                "Found reservations expiring soon. Sending reminders...",
+            );
 
             for (const reservation of expiringReservations) {
-                await sendExpiringReservationReminder(reservation.userId, reservation.reservationId, reservation.finalDate);
+                await sendExpiringReservationReminder(
+                    reservation.userId,
+                    reservation.reservationId,
+                    reservation.finalDate,
+                );
             }
 
             logMessage("Reminders sent successfully.");
