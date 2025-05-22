@@ -1,32 +1,76 @@
+// LibraryContext.tsx
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
 
-const LibraryContext = createContext<{
+interface OpeningHours {
+  monday: string;
+  tuesday: string;
+  wednesday: string;
+  thursday: string;
+  friday: string;
+  saturday: string;
+  sunday: string;
+}
+
+interface LibraryContextType {
   libraryName: string;
+  address: string;
+  email: string;
+  phone: string;
+  openingHours: OpeningHours;
   setLibraryName: (name: string) => void;
-}>({
+}
+
+const LibraryContext = createContext<LibraryContextType>({
   libraryName: "Biblio",
+  address: "",
+  email: "",
+  phone: "",
+  openingHours: {
+    monday: "",
+    tuesday: "",
+    wednesday: "",
+    thursday: "",
+    friday: "",
+    saturday: "",
+    sunday: "",
+  },
   setLibraryName: () => { },
 });
 
 export function LibraryProvider({ children }: { children: React.ReactNode }) {
   const [libraryName, setLibraryName] = useState("Biblio");
+  const [address, setAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [openingHours, setOpeningHours] = useState<OpeningHours>({
+    monday: "",
+    tuesday: "",
+    wednesday: "",
+    thursday: "",
+    friday: "",
+    saturday: "",
+    sunday: "",
+  });
 
   useEffect(() => {
-    const fetchLibraryName = async () => {
+    const fetchLibrary = async () => {
       try {
-        const response = await fetch("/api/library/name");
-        if (response.ok) {
-          const data = await response.json();
+        const res = await fetch("/api/library");
+        if (res.ok) {
+          const data = await res.json();
           setLibraryName(data.name);
+          setAddress(data.location);
+          setEmail(data.email);
+          setPhone(data.phone);
+          setOpeningHours(data.openingHours);
         }
-      } catch (error) {
-        console.error("⚠️ Erreur lors de la récupération du nom :", error);
+      } catch (err) {
+        console.error("Erreur fetch library:", err);
       }
     };
-
-    fetchLibraryName();
+    fetchLibrary();
   }, []);
 
   useEffect(() => {
@@ -34,7 +78,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   }, [libraryName]);
 
   return (
-    <LibraryContext.Provider value={{ libraryName, setLibraryName }}>
+    <LibraryContext.Provider value={{ libraryName, address, email, phone, openingHours, setLibraryName }}>
       {children}
     </LibraryContext.Provider>
   );

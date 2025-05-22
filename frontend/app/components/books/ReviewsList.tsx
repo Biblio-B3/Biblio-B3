@@ -20,18 +20,15 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
 
   const itemsPerPage = 10;
 
-  // Protéger contre la boucle
   useEffect(() => {
-    if (
-      pagination &&
-      pagination.totalPages > 0 &&
-      currentPage > pagination.totalPages
-    ) {
+    if (pagination && currentPage > pagination.totalPages) {
       setCurrentPage(pagination.totalPages);
     }
   }, [pagination, currentPage]);
 
   useEffect(() => {
+    console.log("Fetching reviews for", bookId, "page", currentPage);
+
     if (!bookId) return;
 
     let isMounted = true;
@@ -75,6 +72,8 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
 
         const data = await response.json();
 
+        // Ne surtout PAS modifier currentPage ici !
+
         const reviewsWithUserInfo = await Promise.all(
           data.data.map(async (review: Review) => {
             try {
@@ -96,7 +95,9 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
                   },
                 };
               }
-            } catch { }
+            } catch {
+              // fallback user unknown
+            }
             return {
               ...review,
               user: {
@@ -121,6 +122,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     };
 
     fetchReviews();
+
     return () => {
       isMounted = false;
     };

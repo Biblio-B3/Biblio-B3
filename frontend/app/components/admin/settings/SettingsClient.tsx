@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { getLocalStorageItem } from "@/app/utils/isClient";
-import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
-import { CheckUserId } from "@/app/login/LoginForm";
 
 interface OpeningHours {
   monday: string;
@@ -19,7 +16,7 @@ interface OpeningHours {
   sunday: string;
 }
 
-const dayLabels: Record<keyof OpeningHours, string> = {
+const frenchDays: Record<keyof OpeningHours, string> = {
   monday: "Lundi",
   tuesday: "Mardi",
   wednesday: "Mercredi",
@@ -31,6 +28,7 @@ const dayLabels: Record<keyof OpeningHours, string> = {
 
 export default function ProfileClient() {
   const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [openingHours, setOpeningHours] = useState<OpeningHours>({
@@ -44,19 +42,57 @@ export default function ProfileClient() {
   });
 
   const { toast } = useToast();
-  const fetchWithAuth = useApiErrorHandler();
 
-  const token = getLocalStorageItem("auth_token");
-  const userId = token ? CheckUserId(token) : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+
+  // Fetch existing library data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/library", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { auth_token: token } : {}),
+          },
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setName(data.name || "");
+        setEmail(data.email || "");
+        setLocation(data.location || "");
+        setPhone(data.phone || "");
+        setOpeningHours(data.openingHours || {
+          monday: "",
+          tuesday: "",
+          wednesday: "",
+          thursday: "",
+          friday: "",
+          saturday: "",
+          sunday: "",
+        });
+      } catch (err) {
+        console.error("Error fetching library data:", err);
+        toast({ title: "Erreur", description: "Impossible de charger les données existantes.", variant: "destructive" });
+      }
+    };
+
+    fetchData();
+  }, [toast, token]);
 
   const handleChangeHour = (day: keyof OpeningHours, value: string) => {
     setOpeningHours(prev => ({ ...prev, [day]: value }));
   };
 
   const handleSubmit = async () => {
+    if (!name || !email || !location || !phone) {
+      toast({ title: "Erreur", description: "Tous les champs doivent être remplis.", variant: "destructive" });
+      return;
+    }
+
     try {
-      const body = { name, location, phone, openingHours };
-      const res = await fetchWithAuth("/api/library", {
+      const body = { name, email, location, phone, openingHours };
+      const res = await fetch("/api/library", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -67,6 +103,7 @@ export default function ProfileClient() {
       if (!res.ok) throw new Error();
       toast({ title: "Succès", description: "Profil mis à jour." });
     } catch (error) {
+      console.error("handleSubmit error", error);
       toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" });
     }
   };
@@ -75,30 +112,54 @@ export default function ProfileClient() {
     <div className="space-y-4 p-4 max-w-lg mx-auto">
       <div>
         <Label htmlFor="name">Nom de la bibliothèque</Label>
-        <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+        <Input
+          id="name"
+          value={name}
+          placeholder="Nom de la bibliothèque"
+          onChange={e => setName(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="email">Email de contact</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          placeholder="Adresse email"
+          onChange={e => setEmail(e.target.value)}
+        />
       </div>
 
       <div>
         <Label htmlFor="location">Adresse</Label>
-        <Input id="location" value={location} onChange={e => setLocation(e.target.value)} />
+        <Input
+          id="location"
+          value={location}
+          placeholder="Adresse complète"
+          onChange={e => setLocation(e.target.value)}
+        />
       </div>
 
       <div>
         <Label htmlFor="phone">Téléphone</Label>
-        <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} />
+        <Input
+          id="phone"
+          value={phone}
+          placeholder="Numéro de téléphone"
+          onChange={e => setPhone(e.target.value)}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>Horaires d'ouverture</Label>
         {Object.entries(openingHours).map(([day, hours]) => (
           <div key={day} className="flex items-center space-x-2">
-            <Label className="w-24" htmlFor={day}>
-              {dayLabels[day as keyof OpeningHours]}
-            </Label>
+            <Label className="capitalize w-24" htmlFor={day}>{frenchDays[day as keyof OpeningHours]}</Label>
             <Input
               id={day}
-              placeholder="ex: 09:00-18:00"
               value={hours}
+              placeholder="ex: 09:00-18:00"
               onChange={e => handleChangeHour(day as keyof OpeningHours, e.target.value)}
             />
           </div>
