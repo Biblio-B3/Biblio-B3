@@ -30,7 +30,10 @@ export async function unclaimed_reservation_reminder() {
             logMessage("Found unclaimed reservations. Sending reminders...");
 
             for (const reservation of unclaimedReservations) {
-                await sendUnclaimedReservationReminder(reservation.userId, reservation.reservationId);
+                await sendUnclaimedReservationReminder(
+                    reservation.userId,
+                    reservation.reservationId,
+                );
             }
 
             logMessage("Reminders sent successfully.");

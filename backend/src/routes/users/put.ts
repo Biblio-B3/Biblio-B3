@@ -105,44 +105,51 @@ app.put(
     },
 );
 
-app.put("/users/:id/email-notification", checkTokenMiddleware, grantedAccessMiddleware("owner", users), async (req: Request, res: Response, next: NextFunction) => {
-    const userId = parseInt(req.params.id, 10);
-    if (isNaN(userId) || userId <= 0)
-        throw new AppError("Invalid user ID provided.", 400);
+app.put(
+    "/users/:id/email-notification",
+    checkTokenMiddleware,
+    grantedAccessMiddleware("owner", users),
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = parseInt(req.params.id, 10);
+            if (isNaN(userId) || userId <= 0)
+                throw new AppError("Invalid user ID provided.", 400);
 
-    const { email_notification } = req.body;
+            const { email_notification } = req.body;
 
-    if (email_notification === undefined) {
-        throw new AppError("Email notification preference is required.", 400);
-    }
+            if (email_notification === undefined) {
+                throw new AppError(
+                    "Email notification preference is required.",
+                    400,
+                );
+            }
 
-    try {
-        const [updatedUser] = await db
-            .update(users)
-            .set({ email_notification })
-            .where(eq(users.id, userId))
-            .returning();
+            const [updatedUser] = await db
+                .update(users)
+                .set({ email_notification })
+                .where(eq(users.id, userId))
+                .returning();
 
-        if (!updatedUser)
-            throw new AppError("User not found.", 404);
+            if (!updatedUser) throw new AppError("User not found.", 404);
 
-        res.status(200).json({
-            message: "Email notification preference updated successfully.",
-            email_notification: updatedUser.email_notification,
-        });
-    } catch (error) {
-        if (error instanceof AppError) {
-            return next(error);
+            res.status(200).json({
+                message: "Email notification preference updated successfully.",
+                email_notification: updatedUser.email_notification,
+            });
+        } catch (error) {
+            if (error instanceof AppError) {
+                return next(error);
+            }
+            next(
+                new AppError(
+                    "Internal error while updating the email notification",
+                    500,
+                    error,
+                ),
+            );
         }
-        next(
-            new AppError(
-                "Internal error while updating the email notification",
-                500,
-                error,
-            ),
-        );
-    }
-});
+    },
+);
 
 /**
  * @swagger

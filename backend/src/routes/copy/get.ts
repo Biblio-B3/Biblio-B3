@@ -10,22 +10,15 @@ import { AppError } from "../../app/utils/AppError";
 import { grantedAccessMiddleware } from "../../app/middlewares/verify_access_right";
 import { reservation } from "../../db/schema/reservation";
 
-app.get(
-    "/copy",
-    async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const allCopies = await db.select().from(copy);
-            const validatedCopies = allCopies.map((c) =>
-                selectCopySchema.parse(c),
-            );
-            res.status(200).json(validatedCopies);
-        } catch (error) {
-            return next(
-                new AppError("Error while retrieving copies.", 500, error),
-            );
-        }
-    },
-);
+app.get("/copy", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const allCopies = await db.select().from(copy);
+        const validatedCopies = allCopies.map((c) => selectCopySchema.parse(c));
+        res.status(200).json(validatedCopies);
+    } catch (error) {
+        return next(new AppError("Error while retrieving copies.", 500, error));
+    }
+});
 
 app.get(
     "/books/:id/copy",
