@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { getLocalStorageItem } from "@/app/utils/isClient";
-import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
+import { useApiErrorHandler } from "../components/DisconnectAfterRevocation";
 import { CheckUserId } from "@/app/login/LoginForm";
 
 export default function SettingsPage() {

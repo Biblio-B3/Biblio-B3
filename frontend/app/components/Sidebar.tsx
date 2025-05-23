@@ -53,13 +53,14 @@ export default function Sidebar() {
     { href: "/components/admin/reviews", icon: Star, label: "Évaluations" },
     { href: "/components/admin/stats", icon: BarChart2, label: "Statistiques" },
     { href: "/components/admin/settings", icon: Settings, label: "Paramètres" },
-    { href: "/components/admin/profile", icon: Home, label: "Profil" },
+    { href: "/profile", icon: Home, label: "Profil" },
   ];
 
   const userNavItems = [
     { href: "/books", icon: Home, label: "Accueil" },
     { href: "/components/user/reservation_user", icon: Clock, label: "Reservation" },
     { href: "/components/user/history", icon: Clock, label: "Historique" },
+    { href: "/profile", icon: Home, label: "Profil" },
   ];
 
   const navItems = !isAuthenticated
@@ -84,8 +85,8 @@ export default function Sidebar() {
               <Link
                 href={item.href}
                 className={`flex items-center p-2 rounded-lg ${pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
               >
                 <item.icon className="mr-2 h-5 w-5" />
