@@ -32,6 +32,7 @@ type JwtPayload = {
 export default function UserReservations() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
     const fetchWithAuth = useApiErrorHandler();
 
     const getUserIdFromToken = (): number | null => {
@@ -46,10 +47,15 @@ export default function UserReservations() {
     };
 
     useEffect(() => {
+        let isMounted = true;
+
         const fetchUserReservations = async () => {
             const userId = getUserIdFromToken();
             if (!userId) {
-                setError("Utilisateur non authentifié.");
+                if (isMounted) {
+                    setError("Utilisateur non authentifié.");
+                    setLoading(false);
+                }
                 return;
             }
 
@@ -60,41 +66,67 @@ export default function UserReservations() {
                     },
                 });
 
-                if (!response.ok)
-                    throw new Error("Erreur lors de la récupération des réservations");
+                if (!isMounted) return;
 
                 const data: Reservation[] = await response.json();
-                console.log("📦 Réservations utilisateur :", data); // ✅ LOG ajouté ici
+                console.log("📦 Réservations utilisateur :", data);
                 setReservations(data);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Erreur inconnue");
+                setError(null);
+            } catch (err: any) {
+                if (!isMounted) return;
+
+                console.log("Erreur attrapée:", err);
+                
+                // Détecter si c'est un 404 (aucune réservation)
+                const isNoReservations = 
+                    err?.message?.toLowerCase().includes("not found") ||
+                    err?.message?.toLowerCase().includes("no reservations") ||
+                    (err?.message && err.message.includes("Resource with ID") && err.message.includes("not found"));
+
+                if (isNoReservations) {
+                    console.log("✅ Aucune réservation trouvée");
+                    setReservations([]);
+                    setError(null);
+                } else {
+                    console.log("❌ Vraie erreur:", err.message);
+                    setError("Erreur lors de la récupération des réservations");
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchUserReservations();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const handleDelete = async (id: number) => {
         try {
-            const response = await fetchWithAuth(`/api/reservations/${id}`, {
+            await fetchWithAuth(`/api/reservations/${id}`, {
                 method: "DELETE",
                 headers: {
                     auth_token: `${localStorage.getItem("auth_token")}`,
                 },
             });
 
-            if (!response.ok)
-                throw new Error("Erreur lors de la suppression de la réservation");
-
             setReservations((prev) => prev.filter((r) => r.id !== id));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Erreur inconnue");
+            setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
         }
     };
 
     const formatDate = (dateString: string) => {
         return format(new Date(dateString), "dd-MM-yyyy", { locale: fr });
-    };
+    }; 
+
+    if (loading) {
+        return <div className="text-center py-4">Chargement des réservations...</div>;
+    }
 
     if (error) {
         return <p className="text-red-500">{error}</p>;
@@ -104,42 +136,42 @@ export default function UserReservations() {
         <>
             <h1 className="text-2xl font-bold mb-4">Mes réservations</h1>
 
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Titre du livre</TableHead>
-                        <TableHead>Date de début</TableHead>
-                        <TableHead>Date de fin</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Action</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {reservations.map((reservation) => (
-                        <TableRow key={reservation.id}>
-                            <TableCell>{reservation.book_title}</TableCell>
-                            <TableCell>{formatDate(reservation.reservation_date)}</TableCell>
-                            <TableCell>{formatDate(reservation.final_date)}</TableCell>
-                            <TableCell>
-                                {reservation.is_claimed ? "Réclamée" : "Non réclamée"}
-                            </TableCell>
-                            <TableCell>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDelete(reservation.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </TableCell>
+            {reservations.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Titre du livre</TableHead>
+                            <TableHead>Date de début</TableHead>
+                            <TableHead>Date de fin</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead>Action</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-
-            {reservations.length === 0 && (
+                    </TableHeader>
+                    <TableBody>
+                        {reservations.map((reservation) => (
+                            <TableRow key={reservation.id}>
+                                <TableCell>{reservation.book_title}</TableCell>
+                                <TableCell>{formatDate(reservation.reservation_date)}</TableCell>
+                                <TableCell>{formatDate(reservation.final_date)}</TableCell>
+                                <TableCell>
+                                    {reservation.is_claimed ? "Réclamée" : "Non réclamée"}
+                                </TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDelete(reservation.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            ) : (
                 <p className="mt-6 text-muted-foreground text-center">
-                    Vous n’avez aucune réservation en cours.
+                    Vous n'avez aucune réservation en cours.
                 </p>
             )}
         </>
