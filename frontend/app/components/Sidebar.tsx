@@ -1,4 +1,3 @@
-// Sidebar.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -129,15 +128,17 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <div className="opacity-80 mb-4 bg-white dark:bg-gray-700 p-2 rounded-lg">
-        <h2 className="font-semibold text-sm mb-1">Horaires d'ouverture</h2>
-        {Object.entries(openingHours).map(([day, hours]) => (
-          <div key={day} className="flex justify-between text-xs capitalize">
-            <span>{dayLabels[day] || day}</span>
-            <span>{hours}</span>
-          </div>
-        ))}
-      </div>
+      {openingHours && Object.keys(openingHours).length > 0 && (
+        <div className="opacity-80 mb-4 bg-white dark:bg-gray-700 p-2 rounded-lg">
+          <h2 className="font-semibold text-sm mb-1">Horaires d'ouverture</h2>
+          {Object.entries(openingHours).map(([day, hours]) => (
+            <div key={day} className="flex justify-between text-xs capitalize">
+              <span>{dayLabels[day] || day}</span>
+              <span>{hours}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div>
 
