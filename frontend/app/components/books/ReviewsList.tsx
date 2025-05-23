@@ -34,10 +34,12 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     let isMounted = true;
 
     const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+      if (!isMounted) return;
+      
+      setLoading(true);
+      setError(null);
 
+      try {
         const response = await fetchWithAuth(
           `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`,
           {
@@ -49,30 +51,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
 
         if (!isMounted) return;
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            // Cas avec 0 review : arrêter la pagination
-            setReviews([]);
-            setPagination({
-              page: 1,
-              total: 0,
-              totalPages: 1,
-              hasNextPage: false,
-              hasPreviousPage: false,
-              itemsPerPage: itemsPerPage,
-            });
-            setLoading(false);
-            return;
-          } else {
-            setError(`Erreur: ${response.statusText}`);
-            setLoading(false);
-            return;
-          }
-        }
-
         const data = await response.json();
-
-        // Ne surtout PAS modifier currentPage ici !
 
         const reviewsWithUserInfo = await Promise.all(
           data.data.map(async (review: Review) => {
@@ -111,13 +90,32 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         if (isMounted) {
           setReviews(reviewsWithUserInfo);
           setPagination(data.pagination);
+          setLoading(false);
         }
-      } catch {
+      } catch (err: any) {
+        console.log("Caught error:", err);
+        
         if (isMounted) {
-          setError("Erreur lors de la récupération des avis");
+          // Vérifier si c'est une erreur 404 (aucun avis)
+          if (err?.message === "No reviews found for this book.") {
+            console.log("404 detected in catch - no reviews");
+            // Cas avec 0 review
+            setReviews([]);
+            setPagination({
+              page: 1,
+              total: 0,
+              totalPages: 1,
+              hasNextPage: false,
+              hasPreviousPage: false,
+              itemsPerPage: itemsPerPage,
+            });
+            setError(null); // Pas d'erreur pour ce cas
+          } else {
+            // Vraie erreur
+            setError("Erreur lors de la récupération des avis");
+          }
+          setLoading(false);
         }
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
@@ -126,13 +124,16 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     return () => {
       isMounted = false;
     };
-  }, [bookId, currentPage, fetchWithAuth]);
+  }, [bookId, currentPage]);
 
-  if (loading && !reviews.length) {
+  console.log("Current state:", { reviews: reviews.length, error, loading, pagination });
+
+  if (loading) {
     return <div className="text-center py-4">Chargement des avis...</div>;
   }
 
   if (error) {
+    console.log("Showing error:", error);
     return <div className="text-center py-4 text-red-500">{error}</div>;
   }
 
@@ -173,7 +174,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         </>
       ) : (
         <div className="text-center py-8 text-muted-foreground">
-          Aucun avis pour ce livre pour le moment.
+          Aucun avis n'existe pour l'instant.
         </div>
       )}
     </div>
