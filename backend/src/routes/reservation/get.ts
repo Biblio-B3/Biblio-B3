@@ -97,8 +97,10 @@ app.get(
                 .innerJoin(books, eq(books.id, copy.book_id))
                 .where(eq(reservation.user_id, userId));
 
-            if (foundReservation.length === 0)
-                throw new AppError("Reservation not found", 404);
+            if (foundReservation.length === 0) {
+                res.status(404).json("No reservations found for this user.");
+                return;
+            }
 
             const validated = foundReservation.map((r) => ({
                 id: r.id,

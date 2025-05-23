@@ -74,8 +74,12 @@ app.get(
                 .innerJoin(books, eq(books.id, review.book_id))
                 .where(eq(review.book_id, bookId));
 
-            if (foundReview.length === 0)
-                throw new AppError("Review not found.", 404);
+            if (foundReview.length === 0) {
+                res.status(404).json({
+                    message: "No reviews found for this book.",
+                });
+                return;
+            }
 
             res.status(200).json(foundReview);
 
