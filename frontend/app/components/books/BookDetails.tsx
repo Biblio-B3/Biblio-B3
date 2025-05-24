@@ -2,16 +2,35 @@
 
 import { useState, useEffect } from "react";
 import { Book } from "./types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fr } from "date-fns/locale";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { CopiesList } from "./CopiesList";
 import { ReviewsList } from "./ReviewsList";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
-import { authFetch } from "@/app/utils/authFetch";
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 type BookDetailsProps = {
   bookId: string;
@@ -91,6 +110,50 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       isMounted = false;
     };
   }, [bookId, fetchWithAuth, dataFetched]);
+
+  const handleDeleteBook = async () => {
+    try {
+      const response = await fetchWithAuth(`/api/books/${bookId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          auth_token: `${localStorage.getItem("auth_token")}`,
+        },
+      });
+
+      if (response.ok) {
+        router.push("/books");
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || "Erreur lors de la suppression du livre");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      setError("Erreur lors de la connexion au serveur");
+    }
+  };
+
+  const handleArchiveBook = async () => {
+    try {
+      const response = await fetchWithAuth(`/api/books/${bookId}/archiving`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          auth_token: `${localStorage.getItem("auth_token")}`,
+        },
+      });
+
+      if (response.ok) {
+        router.push("/books");
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || "Erreur lors de l'archivage du livre");
+      }
+    } catch (error) {
+      console.error("Error archiving book:", error);
+      setError("Erreur lors de la connexion au serveur");
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd-MM-yyyy", { locale: fr });
