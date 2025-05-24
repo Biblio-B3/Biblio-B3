@@ -18,22 +18,8 @@ const dayLabels: Record<string, string> = {
   saturday: "Samedi",
   sunday: "Dimanche",
 };
-const dayLabels: Record<string, string> = {
-  monday: "Lundi",
-  tuesday: "Mardi",
-  wednesday: "Mercredi",
-  thursday: "Jeudi",
-  friday: "Vendredi",
-  saturday: "Samedi",
-  sunday: "Dimanche",
-};
 
 export default function Sidebar() {
-  const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
-  const { libraryName, address, email, phone, openingHours } = useLibrary();
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -51,11 +37,7 @@ export default function Sidebar() {
     if (isClient) {
       removeLocalStorageItem("userRole");
       removeLocalStorageItem("auth_token");
-      removeLocalStorageItem("userRole");
-      removeLocalStorageItem("auth_token");
     }
-    router.push("/login");
-  };
     router.push("/login");
   };
 
@@ -70,20 +52,16 @@ export default function Sidebar() {
     { href: "/components/admin/reviews", icon: Star, label: "Évaluations" },
     { href: "/components/admin/stats", icon: BarChart2, label: "Statistiques" },
     { href: "/components/admin/settings", icon: Settings, label: "Paramètres" },
-    { href: "/components/admin/profile", icon: Home, label: "Profil" },
+    { href: "/profile", icon: Home, label: "Profil" },
   ];
 
   const userNavItems = [
     { href: "/books", icon: Home, label: "Accueil" },
     { href: "/components/user/reservation_user", icon: Clock, label: "Reservation" },
     { href: "/components/user/history", icon: Clock, label: "Historique" },
+    { href: "/profile", icon: Home, label: "Profil" },
   ];
 
-  const navItems = !isAuthenticated
-    ? [{ href: "/books", icon: Home, label: "Accueil" }]
-    : userRole === "admin"
-      ? adminNavItems
-      : userNavItems;
   const navItems = !isAuthenticated
     ? [{ href: "/books", icon: Home, label: "Accueil" }]
     : userRole === "admin"
@@ -100,24 +78,14 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1">
-    <aside className="w-64 bg-gray-100 dark:bg-gray-800 p-4 flex flex-col">
-      <div className="text-center mb-4">
-        <h1 className="text-2xl font-bold">{libraryName}</h1>
-        <p className="text-sm mt-1">{address}</p>
-        <p className="text-sm">{email}</p>
-        <p className="text-sm">{phone}</p>
-      </div>
-
-      <nav className="flex-1">
         <ul>
-          {navItems.map(item => (
           {navItems.map(item => (
             <li key={item.href} className="mb-2">
               <Link
                 href={item.href}
                 className={`flex items-center p-2 rounded-lg ${pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-gray-200 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
               >
                 <item.icon className="mr-2 h-5 w-5" />
@@ -141,18 +109,6 @@ export default function Sidebar() {
       )}
 
       <div>
-
-      <div className="opacity-80 mb-4 bg-white dark:bg-gray-700 p-2 rounded-lg">
-        <h2 className="font-semibold text-sm mb-1">Horaires d'ouverture</h2>
-        {Object.entries(openingHours).map(([day, hours]) => (
-          <div key={day} className="flex justify-between text-xs capitalize">
-            <span>{dayLabels[day] || day}</span>
-            <span>{hours}</span>
-          </div>
-        ))}
-      </div>
-
-      <div>
         {isAuthenticated ? (
           <Button variant="outline" className="w-full" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -166,6 +122,5 @@ export default function Sidebar() {
         )}
       </div>
     </aside>
-  );
   );
 }
