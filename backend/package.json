@@ -7,23 +7,29 @@
         "@types/connect": "^3",
         "@types/cors": "^2",
         "@types/express": "^5.0.0",
+        "@types/jest": "^29.5.14",
         "@types/node": "^22.12.0",
         "@types/node-cron": "^3",
         "@types/node-isbn": "^1",
         "@types/nodemailer": "^6",
         "@types/pg": "^8",
+        "@types/supertest": "^6.0.3",
         "@types/swagger-jsdoc": "^6",
         "@types/swagger-ui-express": "^4.1.7",
         "drizzle-kit": "^0.30.4",
         "eslint": "^9.19.0",
         "eslint-plugin-jest": "^28.11.0",
+        "jest": "^29.7.0",
         "prettier": "3.3.3",
+        "supertest": "^7.1.1",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
+        "ts-jest": "^29.3.4",
         "typescript": "^5.6.3",
         "typescript-eslint": "^8.10.0"
     },
     "scripts": {
+        "test": "jest",
         "build": "yarn tsc",
         "start": "node dist/src/",
         "all": "yarn build && yarn start",
@@ -50,5 +56,11 @@
         "pg": "^8.13.1",
         "xss": "^1.0.15",
         "zod": "^3.23.8"
+    },
+    "jest": {
+        "preset": "ts-jest",
+        "testEnvironment": "node",
+        "moduleDirectories": ["node_modules", "src"],
+        "rootDir": "src"
     }
 }
