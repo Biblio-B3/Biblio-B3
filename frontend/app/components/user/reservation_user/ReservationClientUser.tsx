@@ -60,35 +60,46 @@ export default function UserReservations() {
             }
 
             try {
+                // On appelle la route telle qu'elle existe sur le backend :
                 const response = await fetchWithAuth(`/api/reservations/${userId}`, {
                     headers: {
-                        auth_token: `${localStorage.getItem("auth_token")}`,
+                        auth_token: localStorage.getItem("auth_token") || "",
                     },
                 });
 
-                if (!isMounted) return;
+                // Si le backend renvoie 404, on considère qu’il n’y a aucune réservation
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        if (isMounted) {
+                            setReservations([]);
+                            setError(null);
+                        }
+                        return;
+                    }
+                    // sinon on lève une erreur générique
+                    throw new Error(`HTTP ${response.status}`);
+                }
 
+                // Si on est ici, response.ok === true
                 const data: Reservation[] = await response.json();
-                console.log("📦 Réservations utilisateur :", data);
+                if (!isMounted) return;
                 setReservations(data);
                 setError(null);
             } catch (err: any) {
                 if (!isMounted) return;
 
                 console.log("Erreur attrapée:", err);
-                
-                // Détecter si c'est un 404 (aucune réservation)
-                const isNoReservations = 
-                    err?.message?.toLowerCase().includes("not found") ||
-                    err?.message?.toLowerCase().includes("no reservations") ||
-                    (err?.message && err.message.includes("Resource with ID") && err.message.includes("not found"));
+
+                // Si l’erreur contient “Resource with ID … not found” => on traite comme “aucune réservation”
+                const isNoReservations =
+                    typeof err.message === "string" &&
+                    err.message.toLowerCase().includes("resource with id") &&
+                    err.message.toLowerCase().includes("not found");
 
                 if (isNoReservations) {
-                    console.log("✅ Aucune réservation trouvée");
                     setReservations([]);
                     setError(null);
                 } else {
-                    console.log("❌ Vraie erreur:", err.message);
                     setError("Erreur lors de la récupération des réservations");
                 }
             } finally {
@@ -99,7 +110,6 @@ export default function UserReservations() {
         };
 
         fetchUserReservations();
-
         return () => {
             isMounted = false;
         };
@@ -107,22 +117,26 @@ export default function UserReservations() {
 
     const handleDelete = async (id: number) => {
         try {
-            await fetchWithAuth(`/api/reservations/${id}`, {
+            const response = await fetchWithAuth(`/api/reservations/${id}`, {
                 method: "DELETE",
                 headers: {
-                    auth_token: `${localStorage.getItem("auth_token")}`,
+                    auth_token: localStorage.getItem("auth_token") || "",
                 },
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
             setReservations((prev) => prev.filter((r) => r.id !== id));
-        } catch (err) {
+        } catch (err: any) {
             setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
         }
     };
 
     const formatDate = (dateString: string) => {
         return format(new Date(dateString), "dd-MM-yyyy", { locale: fr });
-    }; 
+    };
 
     if (loading) {
         return <div className="text-center py-4">Chargement des réservations...</div>;

@@ -73,14 +73,15 @@ app.get(
 );
 
 app.get(
-    "/reservations/:id",
+    "/reservations/:user_id",
     checkTokenMiddleware,
     grantedAccessMiddleware("admin_or_owner", reservation),
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userId = parseInt(req.params.id, 10);
-            if (isNaN(userId) || userId <= 0)
+            const userId = parseInt(req.params.user_id, 10);
+            if (isNaN(userId) || userId <= 0) {
                 throw new AppError("Invalid user ID", 400);
+            }
 
             const foundReservation = await db
                 .select({

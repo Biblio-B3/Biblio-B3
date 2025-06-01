@@ -3,6 +3,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import z from "zod";
 import { users } from "./users";
 import { books } from "./book";
+import { copy } from "./copy";
 
 export const historical = pgTable("historical", {
     id: serial().primaryKey().notNull(),
@@ -10,6 +11,9 @@ export const historical = pgTable("historical", {
     book_id: integer("book_id")
         .notNull()
         .references(() => books.id, { onDelete: "cascade" }),
+    copy_id: integer("copy_id")
+        .notNull()
+        .references(() => copy.id, { onDelete: "cascade" }),
     user_id: integer("user_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
@@ -18,17 +22,20 @@ export const historical = pgTable("historical", {
 export const insertHistoricalSchema = createInsertSchema(historical, {
     date_read: z.coerce.date(),
     book_id: (schema) => schema.book_id,
+    copy_id: (schema) => schema.copy_id,
     user_id: (schema) => schema.user_id,
 });
 
 export const selectHistoricalSchema = createSelectSchema(historical, {
     date_read: z.coerce.date(),
     book_id: (schema) => schema.book_id,
+    copy_id: (schema) => schema.copy_id,
     user_id: (schema) => schema.user_id,
 });
 
 export const updateHistoricalSchema = createInsertSchema(historical, {
     date_read: z.coerce.date(),
     book_id: (schema) => schema.book_id.optional(),
+    copy_id: (schema) => schema.copy_id.optional(),
     user_id: (schema) => schema.user_id.optional(),
 });
