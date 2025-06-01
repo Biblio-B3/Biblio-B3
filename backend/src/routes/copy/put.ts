@@ -110,6 +110,7 @@ app.put(
                         .values({
                             user_id: userReservation.user_id,
                             book_id: updatedCopy.book_id,
+                            copy_id: updatedCopy.id,
                             date_read: new Date(),
                         })
                         .returning();

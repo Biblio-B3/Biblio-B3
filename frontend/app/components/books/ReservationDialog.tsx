@@ -45,7 +45,7 @@ export const ReservationDialog = ({
   // ✅ Si c’est un user, on extrait directement son ID du token
   useEffect(() => {
     if (!isClient) return;
-    
+
     if (role === "user") {
       const token = getLocalStorageItem("auth_token");
       if (token) {
@@ -112,6 +112,7 @@ export const ReservationDialog = ({
     try {
       const response = await authFetchHook("/api/reservations", {
         method: "POST",
+        headers: { auth_token: `${localStorage.getItem("auth_token")}` },
         body: JSON.stringify(payload),
       });
       if (response.ok) {

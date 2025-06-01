@@ -48,6 +48,8 @@ app.get(
                     id: historical.id,
                     date_read: historical.date_read,
                     book_title: books.title,
+                    book_id: historical.book_id,
+                    copy_id: historical.copy_id,
                     user_first_name: users.first_name,
                     user_last_name: users.last_name,
                 })
