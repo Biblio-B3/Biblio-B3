@@ -11,7 +11,7 @@ const nextConfig = {
   output: "standalone",
   distDir: process.env.DIST_DIR || '.next',
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: false,
   env: {
     NEXT_TELEMETRY_DISABLED: '1',
   },
