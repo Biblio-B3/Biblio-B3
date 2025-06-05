@@ -5,7 +5,7 @@ import { Copy } from "./types";
 import { CopyCard } from "./CopyCard";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ ajout du hook
-import { authFetch } from "@/app/utils/authFetch";
+// Removed authFetch import as we're using fetch directly now
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 
 type CopiesListProps = {
@@ -68,9 +68,12 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     if (!confirmed) return;
 
     try {
-      // Utiliser authFetch pour les requêtes DELETE (nécessite authentification)
-      const response = await authFetch(`/api/copy/${copyId}`, {
-        method: "DELETE"
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/copy/${copyId}`, {
+        method: "DELETE",
+        headers: {
+          "auth_token": token || ""
+        }
       });
 
       if (response.ok) {
@@ -83,6 +86,34 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     } catch (error) {
       console.error("Erreur lors de la suppression de la copie:", error);
       alert("Une erreur est survenue lors de la suppression.");
+    }
+  };
+
+  const handleUpdateCopy = async (copyId: number, newState: string) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch(`/api/copy/${copyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "auth_token": token || ""
+        },
+        body: JSON.stringify({ state: newState }),
+      });
+
+      if (response.ok) {
+        setCopies((prev) =>
+          prev.map((copy) =>
+            copy.copy_id === copyId ? { ...copy, state: newState } : copy
+          )
+        );
+      } else {
+        const data = await response.json();
+        alert(data.message || "Erreur lors de la mise à jour.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de la copie:", error);
+      alert("Une erreur est survenue lors de la mise à jour.");
     }
   };
 
@@ -110,7 +141,10 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
             <CopyCard
               key={copy.copy_id}
               copy={copy}
-              {...(isAuthenticated && role === "admin" ? { onDelete: handleDeleteCopy } : {})} // ✅ condition avec vérification d'authentification
+              {...(isAuthenticated && role === "admin" ? {
+                onDelete: handleDeleteCopy,
+                onUpdateCopy: handleUpdateCopy
+              } : {})} // ✅ condition avec vérification d'authentification
             />
           ))}
         </div>
