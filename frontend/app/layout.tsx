@@ -14,9 +14,14 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="fr">
-            <body className={inter.className}>
-                <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <html lang="fr" suppressHydrationWarning>
+            <body className={inter.className} suppressHydrationWarning>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="light"
+                    enableSystem={false}
+                    storageKey="librario-theme"
+                >
                     <DisconnectAfterRevocationWrapper>
                         <LibraryProvider>
                             <AuthWrapper>{children}</AuthWrapper>
@@ -27,7 +32,3 @@ export default function RootLayout({
         </html>
     )
 }
-
-
-
-import './globals.css'

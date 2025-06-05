@@ -31,6 +31,10 @@ export const selectHistoricalSchema = createSelectSchema(historical, {
     book_id: (schema) => schema.book_id,
     copy_id: (schema) => schema.copy_id,
     user_id: (schema) => schema.user_id,
+}).extend({
+    book_title: z.string().optional(),
+    user_first_name: z.string().optional(),
+    user_last_name: z.string().optional(),
 });
 
 export const updateHistoricalSchema = createInsertSchema(historical, {
@@ -39,3 +43,4 @@ export const updateHistoricalSchema = createInsertSchema(historical, {
     copy_id: (schema) => schema.copy_id.optional(),
     user_id: (schema) => schema.user_id.optional(),
 });
+

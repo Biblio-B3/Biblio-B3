@@ -6,14 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 
+interface DayHours {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
 interface OpeningHours {
-  monday: string;
-  tuesday: string;
-  wednesday: string;
-  thursday: string;
-  friday: string;
-  saturday: string;
-  sunday: string;
+  monday: DayHours;
+  tuesday: DayHours;
+  wednesday: DayHours;
+  thursday: DayHours;
+  friday: DayHours;
+  saturday: DayHours;
+  sunday: DayHours;
 }
 
 const frenchDays: Record<keyof OpeningHours, string> = {
@@ -32,13 +38,13 @@ export default function ProfileClient() {
   const [location, setLocation] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [openingHours, setOpeningHours] = useState<OpeningHours>({
-    monday: "",
-    tuesday: "",
-    wednesday: "",
-    thursday: "",
-    friday: "",
-    saturday: "",
-    sunday: "",
+    monday: { open: "", close: "", closed: false },
+    tuesday: { open: "", close: "", closed: false },
+    wednesday: { open: "", close: "", closed: false },
+    thursday: { open: "", close: "", closed: false },
+    friday: { open: "", close: "", closed: false },
+    saturday: { open: "", close: "", closed: false },
+    sunday: { open: "", close: "", closed: false },
   });
 
   const { toast } = useToast();
@@ -62,15 +68,34 @@ export default function ProfileClient() {
         setEmail(data.email || "");
         setLocation(data.location || "");
         setPhone(data.phone || "");
-        setOpeningHours(data.openingHours || {
-          monday: "",
-          tuesday: "",
-          wednesday: "",
-          thursday: "",
-          friday: "",
-          saturday: "",
-          sunday: "",
+        // Convertir l'ancien format vers le nouveau si nécessaire
+        const hours = data.openingHours || {};
+        const convertedHours: OpeningHours = {} as OpeningHours;
+        
+        Object.keys(frenchDays).forEach(day => {
+          const dayKey = day as keyof OpeningHours;
+          const oldValue = hours[dayKey];
+          
+          if (typeof oldValue === 'string') {
+            // Vérifier si le jour est fermé
+            if (oldValue === 'Fermé' || oldValue.toLowerCase() === 'fermé') {
+              convertedHours[dayKey] = { open: "", close: "", closed: true };
+            } else if (oldValue.includes('-')) {
+              // Conversion de l'ancien format "09:00-18:00" vers le nouveau
+              const [open, close] = oldValue.split('-');
+              convertedHours[dayKey] = { open: open.trim(), close: close.trim(), closed: false };
+            } else if (oldValue) {
+              convertedHours[dayKey] = { open: oldValue.trim(), close: "", closed: false };
+            } else {
+              convertedHours[dayKey] = { open: "", close: "", closed: false };
+            }
+          } else {
+            // Nouveau format déjà en place
+            convertedHours[dayKey] = oldValue || { open: "", close: "", closed: false };
+          }
         });
+        
+        setOpeningHours(convertedHours);
       } catch (err) {
         console.error("Error fetching library data:", err);
         toast({ title: "Erreur", description: "Impossible de charger les données existantes.", variant: "destructive" });
@@ -80,8 +105,31 @@ export default function ProfileClient() {
     fetchData();
   }, [toast, token]);
 
-  const handleChangeHour = (day: keyof OpeningHours, value: string) => {
-    setOpeningHours(prev => ({ ...prev, [day]: value }));
+  const handleChangeHour = (day: keyof OpeningHours, field: 'open' | 'close' | 'closed', value: string | boolean) => {
+    setOpeningHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value
+      }
+    }));
+  };
+
+  // Convertir les horaires pour l'envoi au serveur
+  const convertHoursForSubmit = (hours: OpeningHours) => {
+    const converted: Record<string, string> = {};
+    Object.entries(hours).forEach(([day, dayHours]) => {
+      if (dayHours.closed) {
+        converted[day] = "Fermé";
+      } else if (dayHours.open && dayHours.close) {
+        converted[day] = `${dayHours.open}-${dayHours.close}`;
+      } else if (dayHours.open) {
+        converted[day] = dayHours.open;
+      } else {
+        converted[day] = "";
+      }
+    });
+    return converted;
   };
 
   const handleSubmit = async () => {
@@ -91,7 +139,7 @@ export default function ProfileClient() {
     }
 
     try {
-      const body = { name, email, location, phone, openingHours };
+      const body = { name, email, location, phone, openingHours: convertHoursForSubmit(openingHours) };
       const res = await fetch("/api/library", {
         method: "PUT",
         headers: {
@@ -102,6 +150,9 @@ export default function ProfileClient() {
       });
       if (!res.ok) throw new Error();
       toast({ title: "Succès", description: "Profil mis à jour." });
+      
+      // Recharger la page immédiatement après la sauvegarde réussie
+      window.location.reload();
     } catch (error) {
       console.error("handleSubmit error", error);
       toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" });
@@ -151,17 +202,48 @@ export default function ProfileClient() {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label>Horaires d'ouverture</Label>
-        {Object.entries(openingHours).map(([day, hours]) => (
-          <div key={day} className="flex items-center space-x-2">
-            <Label className="capitalize w-24" htmlFor={day}>{frenchDays[day as keyof OpeningHours]}</Label>
-            <Input
-              id={day}
-              value={hours}
-              placeholder="ex: 09:00-18:00"
-              onChange={e => handleChangeHour(day as keyof OpeningHours, e.target.value)}
-            />
+        {Object.entries(openingHours).map(([day, dayHours]) => (
+          <div key={day} className="space-y-2 p-3 border rounded-lg">
+            <div className="flex items-center justify-between">
+              <Label className="font-medium">{frenchDays[day as keyof OpeningHours]}</Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`${day}-closed`}
+                  checked={dayHours.closed}
+                  onChange={(e) => handleChangeHour(day as keyof OpeningHours, 'closed', e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor={`${day}-closed`} className="text-sm">Fermé</Label>
+              </div>
+            </div>
+            
+            {!dayHours.closed && (
+              <div className="flex items-center space-x-2">
+                <div className="flex-1">
+                  <Label htmlFor={`${day}-open`} className="text-sm text-gray-600">Ouverture</Label>
+                  <Input
+                    id={`${day}-open`}
+                    type="time"
+                    value={dayHours.open}
+                    onChange={(e) => handleChangeHour(day as keyof OpeningHours, 'open', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor={`${day}-close`} className="text-sm text-gray-600">Fermeture</Label>
+                  <Input
+                    id={`${day}-close`}
+                    type="time"
+                    value={dayHours.close}
+                    onChange={(e) => handleChangeHour(day as keyof OpeningHours, 'close', e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

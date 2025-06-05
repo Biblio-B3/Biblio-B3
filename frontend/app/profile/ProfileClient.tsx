@@ -13,8 +13,6 @@ import { CheckUserId } from "@/app/login/LoginForm";
 
 export default function SettingsPage() {
     const [emailNotifications, setEmailNotifications] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
-    const [initialDarkModeLoaded, setInitialDarkModeLoaded] = useState(false);
     const [email, setEmail] = useState("");
     const [bio, setBio] = useState("");
     const [firstName, setFirstName] = useState("");
@@ -22,10 +20,15 @@ export default function SettingsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const [hasFetchedUser, setHasFetchedUser] = useState(false);
     const [updateStatus, setUpdateStatus] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     const { toast } = useToast();
-    const { setTheme } = useTheme();
+    const { theme, setTheme } = useTheme();
     const fetchWithAuth = useApiErrorHandler();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         const token = getLocalStorageItem("auth_token");
@@ -35,10 +38,6 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (!userId || hasFetchedUser) return;
-
-        const savedMode = localStorage.getItem("darkMode");
-        setDarkMode(savedMode === "true");
-        setInitialDarkModeLoaded(true);
 
         (async () => {
             try {
@@ -69,14 +68,6 @@ export default function SettingsPage() {
         })();
     }, [userId, fetchWithAuth, toast, hasFetchedUser]);
 
-    useEffect(() => {
-        if (!initialDarkModeLoaded) return;
-
-        const theme = darkMode ? "dark" : "light";
-        setTheme(theme);
-        localStorage.setItem("darkMode", JSON.stringify(darkMode));
-    }, [darkMode, initialDarkModeLoaded, setTheme]);
-
     const handleEmailChange = useCallback(
         async (checked: boolean) => {
             if (!userId) return;
@@ -100,8 +91,8 @@ export default function SettingsPage() {
     );
 
     const handleDarkChange = useCallback((checked: boolean) => {
-        setDarkMode(checked);
-    }, []);
+        setTheme(checked ? "dark" : "light");
+    }, [setTheme]);
 
     const handleResetPassword = useCallback(async () => {
         if (!userId) return;
@@ -164,7 +155,12 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between">
                 <Label htmlFor="darkMode">Mode sombre</Label>
-                <Switch id="darkMode" checked={darkMode} onCheckedChange={handleDarkChange} />
+                <Switch
+                    id="darkMode"
+                    checked={mounted ? theme === "dark" : false}
+                    onCheckedChange={handleDarkChange}
+                    disabled={!mounted}
+                />
             </div>
 
             <div className="space-y-2">

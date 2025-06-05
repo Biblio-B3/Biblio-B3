@@ -10,14 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,16 +38,6 @@ export default function ReviewsClient() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(true);
-
-  const handleClose = () => {
-    setIsOpen(false);
-  };
-
-  useEffect(() => {
-    if (!error && reviews.length > 0) {
-      handleClose();
-    }
-  }, [reviews, error]);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -123,55 +105,47 @@ export default function ReviewsClient() {
       )}
 
       {!error && reviews.length === 0 && (
-        <Dialog open={isOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Information</DialogTitle>
-              <DialogDescription>
-                Il n'y a actuellement aucune évaluation à afficher.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button onClick={() => setIsOpen(false)}>OK</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="text-center py-8 text-gray-500">
+          Il n'y a actuellement aucune évaluation à afficher.
+        </div>
       )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Livre</TableHead>
-            <TableHead>Utilisateur</TableHead>
-            <TableHead>Note</TableHead>
-            <TableHead>Condition</TableHead>
-            <TableHead>Commentaire</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {reviews.map((review) => (
-            <TableRow key={review.id}>
-              <TableCell>{review.book_title}</TableCell>
-              <TableCell>
-                {review.user_first_name} {review.user_last_name}
-              </TableCell>
-              <TableCell>{review.note}</TableCell>
-              <TableCell>{review.condition}</TableCell>
-              <TableCell>{review.description}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteReview(review.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
+      {!error && reviews.length > 0 && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Livre</TableHead>
+              <TableHead>Utilisateur</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead>Condition</TableHead>
+              <TableHead>Commentaire</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {reviews.map((review) => (
+              <TableRow key={review.id}>
+                <TableCell>{review.book_title}</TableCell>
+                <TableCell>
+                  {review.user_first_name} {review.user_last_name}
+                </TableCell>
+                <TableCell>{review.note}</TableCell>
+                <TableCell>{review.condition}</TableCell>
+                <TableCell>{review.description}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteReview(review.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </>
   );
 }
