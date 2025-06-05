@@ -91,7 +91,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
           const bookData = await bookResponse.json();
           setBook(bookData);
         } else {
-          setError("Erreur lors de la r\u00e9cup\u00e9ration des d\u00e9tails du livre");
+          setError("Erreur lors de la récupération des détails du livre");
         }
       } catch (error) {
         if (isMounted) {
@@ -177,7 +177,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     return (
       <div className="container mx-auto py-6">
         <div className="bg-yellow-100 text-yellow-800 p-4 rounded-md">
-          Livre non trouv\u00e9
+          Livre non trouvé
         </div>
       </div>
     );
@@ -237,11 +237,11 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">ISBN-10: {book.ISBN_10 || "N/A"}</p>
               <p className="text-sm text-muted-foreground mb-1">ISBN-13: {book.ISBN_13 || "N/A"}</p>
-              <p className="text-sm text-muted-foreground mb-1">\u00c9diteur: {book.publisher}</p>
+              <p className="text-sm text-muted-foreground mb-1">Éditeur: {book.publisher}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Date de publication: {formatDate(book.publish_date)}</p>
-              <p className="text-sm text-muted-foreground mb-1">Cat\u00e9gorie: {book.category}</p>
+              <p className="text-sm text-muted-foreground mb-1">Catégorie: {book.category}</p>
               <p className="text-sm text-muted-foreground mb-1">Type: {book.printType}</p>
             </div>
           </div>
@@ -265,7 +265,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
               <DialogHeader>
                 <DialogTitle>Ajouter des exemplaires</DialogTitle>
                 <DialogDescription>
-                  Entrez le nombre d'exemplaires et leur \u00e9tat.
+                  Entrez le nombre d'exemplaires et leur état.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddCopies}>
@@ -285,16 +285,16 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="copyState" className="text-right">
-                      \u00c9tat de l'exemplaire
+                      État de l'exemplaire
                     </Label>
                     <Select onValueChange={setCopyState}>
                       <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="S\u00e9lectionner un \u00e9tat" />
+                        <SelectValue placeholder="Sélectionner un état" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="available">Disponible</SelectItem>
-                        <SelectItem value="borrowed">Emprunt\u00e9</SelectItem>
-                        <SelectItem value="damaged">Endommag\u00e9</SelectItem>
+                        <SelectItem value="borrowed">Emprunté</SelectItem>
+                        <SelectItem value="damaged">Endommagé</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
