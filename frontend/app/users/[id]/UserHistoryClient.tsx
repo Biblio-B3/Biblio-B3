@@ -9,7 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useApiErrorHandler } from "../../../DisconnectAfterRevocation";
+import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 

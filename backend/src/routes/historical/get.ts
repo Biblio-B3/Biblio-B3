@@ -59,7 +59,16 @@ app.get(
                 .where(eq(historical.user_id, userId))
                 .orderBy(historical.date_read);
 
-            res.status(200).json(userHistorical);
+            const validatedHistorical = userHistorical.map((h) =>
+                selectHistoricalSchema.parse(h),
+            );
+            if (validatedHistorical.length === 0)
+                throw new AppError(
+                    `No historical records found for user with ID ${userId}.`,
+                    404,
+                );
+
+            res.status(200).json(validatedHistorical);
         } catch (error) {
             if (error instanceof AppError) return next(error);
             next(
