@@ -1,4 +1,4 @@
-import ReservationsClient from "../components/admin/reservations/ReservationsClient";
+import ReservationsClient from "./ReservationsClient"
 
 export default function ReservationsPage() {
   return (
@@ -6,5 +6,6 @@ export default function ReservationsPage() {
       <h1 className="text-3xl font-bold">Gestion des réservations</h1>
       <ReservationsClient />
     </div>
-  );
+  )
 }
+

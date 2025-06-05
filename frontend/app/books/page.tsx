@@ -2,8 +2,8 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { BooksList } from "../components/books/BooksList";
-import { BookDetails } from "../components/books/BookDetails";
+import { BooksList } from "./components/BooksList";
+import { BookDetails } from "./components/BookDetails";
 
 function BooksContent() {
   const searchParams = useSearchParams();

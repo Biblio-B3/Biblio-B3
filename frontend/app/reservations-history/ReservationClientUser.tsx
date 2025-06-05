@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useApiErrorHandler } from "../../DisconnectAfterRevocation";
+import { useApiErrorHandler } from "../components/DisconnectAfterRevocation";
 import { jwtDecode } from "jwt-decode";
 
 type Reservation = {

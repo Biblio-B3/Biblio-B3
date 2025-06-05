@@ -57,7 +57,7 @@ app.get(
             });
             res.status(200).json(validatedUsers);
         } catch (error) {
-            if (error instanceof AppError) next(error);
+            if (error instanceof AppError) return next(error);
             next(
                 new AppError(
                     "Internal error during user retrieval",

@@ -14,6 +14,8 @@ type AuthWrapperProps = {
 
 const publicRoutes = ["/login", "/register", "/reset-password", "/books", "/"];
 
+const adminRoutes = ["/settings", "/reservations-history", "/stats", "/reviews", "/users", "/users/[id]"];
+
 type JwtPayload = {
   role?: string;
 };
@@ -21,21 +23,31 @@ type JwtPayload = {
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   const isPublicRoute = (path: string) => {
-    // La racine est toujours considérée comme une route publique
     if (path === "/") return true;
     return publicRoutes.includes(path);
   };
 
+  const isAdminRoute = (path: string) => {
+    return adminRoutes.includes(path);
+  };
+
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient) {
+      setIsLoading(false);
+      return;
+    }
     
     const token = getLocalStorageItem("auth_token");
 
     if (!token) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setIsLoading(false);
       if (!isPublicRoute(pathname)) {
         router.push("/login");
       }
@@ -47,31 +59,60 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       const role = decoded.role || null;
       setUserRole(role);
 
-      //Si c'est une route publique, on autorise l'accès même sans rôle
+      if (isAdminRoute(pathname) && role !== "admin") {
+        router.push("/books");
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return;
+      }
+
       if (isPublicRoute(pathname)) {
         setIsAuthenticated(true);
       } else if (!role) {
-        // Si ce n'est pas une route publique et qu'il n'y a pas de rôle, on redirige
         router.push("/login");
+        setIsAuthenticated(false);
       } else {
-        // Si ce n'est pas une route publique mais qu'il y a un rôle, on autorise
         setIsAuthenticated(true);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Erreur de décodage du token :", error);
       if (isClient) {
         localStorage.removeItem("auth_token");
       }
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setIsLoading(false);
       router.push("/login");
     }
   }, [pathname, router]);
 
-  // Pour les routes publiques qui ne sont pas /books, afficher sans sidebar
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-foreground">Chargement...</div>
+      </div>
+    );
+  }
+
   if (isPublicRoute(pathname) && pathname !== "/books") {
     return <>{children}</>;
   }
 
-  // Pour /books ou les routes authentifiées, afficher avec sidebar
+  // Vérification des permissions avant le rendu
+  if (!isPublicRoute(pathname)) {
+    // Route protégée : vérifier l'authentification
+    if (!isAuthenticated) {
+      return null; // Ne rien rendre, la redirection est en cours
+    }
+
+    // Route admin : vérifier le rôle admin
+    if (isAdminRoute(pathname) && userRole !== "admin") {
+      return null; // Ne rien rendre, la redirection est en cours
+    }
+  }
+
+  // Pour /books ou les routes authentifiées autorisées, afficher avec sidebar
   return (
     <div className="flex h-screen bg-background text-foreground">
       <Sidebar />
