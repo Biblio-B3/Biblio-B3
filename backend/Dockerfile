@@ -25,4 +25,4 @@ COPY .env.docker .env
 
 EXPOSE 3001
 
-CMD ["./dist/src/index.js"]
+CMD ["node", "./dist/src/index.js"]
