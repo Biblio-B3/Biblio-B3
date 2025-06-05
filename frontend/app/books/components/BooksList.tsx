@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Book, Pagination } from "./types";
-import { Plus, LogIn } from "lucide-react";
-import { AddBookDialog } from "../admin/AddBookDialog";
+import { Plus, LogIn, Archive } from "lucide-react";
+import { AddBookDialog } from "./AddBookDialog";
 import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { authFetch } from "@/app/utils/authFetch";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
@@ -21,6 +21,7 @@ export const BooksList = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showArchivedOnly, setShowArchivedOnly] = useState(false);
   const fetchWithAuth = useApiErrorHandler();
   const searchParams = useSearchParams();
   const role = useUserRole(); // ✅ récupération du rôle
@@ -37,7 +38,7 @@ export const BooksList = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, showArchivedOnly]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -49,9 +50,11 @@ export const BooksList = () => {
   const fetchBooks = async () => {
     const isSearching = debouncedSearchTerm.trim().length > 0;
 
-    const url = isSearching
-      ? `/api/books/search/${encodeURIComponent(debouncedSearchTerm)}?page=${currentPage}&itemsPerPage=${itemsPerPage}`
+    const baseUrl = isSearching
+      ? `/api/books/search/?title=${encodeURIComponent(debouncedSearchTerm)}&page=${currentPage}&itemsPerPage=${itemsPerPage}`
       : `/api/books?page=${currentPage}&itemsPerPage=${itemsPerPage}`;
+    
+    const url = showArchivedOnly ? `${baseUrl}&is_removed=true` : baseUrl;
 
     console.log("📡 URL appelée depuis le frontend :", url);
 
@@ -81,7 +84,7 @@ export const BooksList = () => {
       fetchBooks();
       document.body.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [debouncedSearchTerm, currentPage]);
+  }, [debouncedSearchTerm, currentPage, showArchivedOnly]);
 
   if (searchParams.get("bookId")) return null;
 
@@ -90,11 +93,23 @@ export const BooksList = () => {
       <div className="container mx-auto py-6">
         <div className="flex justify-between mb-4">
           <SearchBar onSearch={setSearchTerm} />
-          {isAuthenticated && role === "admin" && (
-            <Button onClick={() => setIsAddBookDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {isAuthenticated && role === "admin" && (
+              <>
+                <Button
+                  variant={showArchivedOnly ? "default" : "outline"}
+                  onClick={() => setShowArchivedOnly(!showArchivedOnly)}
+                  className="w-40"
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  {showArchivedOnly ? "Tous les livres" : "Livres archivés"}
+                </Button>
+                <Button onClick={() => setIsAddBookDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">

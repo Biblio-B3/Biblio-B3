@@ -46,19 +46,19 @@ export default function Sidebar() {
   };
 
   const adminNavItems = [
-    { href: "/components/admin/reservations", icon: Calendar, label: "Réservations" },
+    { href: "/reservations", icon: Calendar, label: "Réservations" },
     { href: "/books", icon: Book, label: "Livres" },
-    { href: "/components/admin/users", icon: Users, label: "Utilisateurs" },
-    { href: "/components/admin/reviews", icon: Star, label: "Évaluations" },
-    { href: "/components/admin/stats", icon: BarChart2, label: "Statistiques" },
-    { href: "/components/admin/settings", icon: Settings, label: "Paramètres" },
+    { href: "/users", icon: Users, label: "Utilisateurs" },
+    { href: "/reviews", icon: Star, label: "Évaluations" },
+    { href: "/stats", icon: BarChart2, label: "Statistiques" },
+    { href: "/settings", icon: Settings, label: "Paramètres" },
     { href: "/profile", icon: Home, label: "Profil" },
   ];
 
   const userNavItems = [
     { href: "/books", icon: Home, label: "Accueil" },
-    { href: "/components/user/reservation_user", icon: Clock, label: "Reservation" },
-    { href: "/components/user/history", icon: Clock, label: "Historique" },
+    { href: "/reservations-history", icon: Clock, label: "Reservation" },
+    { href: "/history", icon: Clock, label: "Historique" },
     { href: "/profile", icon: Home, label: "Profil" },
   ];
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const AUTH_ERRORS = ["Relogin is required", "Invalid Compact JWS"];

@@ -78,7 +78,7 @@ export default function UsersClient() {
   };
 
   const handleUserClick = (id: number) => {
-    router.push(`/user-history/${id}`);
+    router.push(`/users/${id}`);
   };
 
   if (loading) return <p>Chargement des utilisateurs...</p>;

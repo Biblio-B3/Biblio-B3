@@ -4,7 +4,7 @@ import { books } from "../../db/schema/book";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
-import { and, eq, like, gte, lte, desc, asc, SQL, sql } from "drizzle-orm";
+import { and, eq, like, ilike, gte, lte, desc, asc, SQL, sql } from "drizzle-orm";
 
 interface BookFilterParams {
     title?: string;
@@ -21,9 +21,9 @@ interface BookFilterParams {
 
 app.get(
     "/books/search",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
+            console.log("Received search request with query:", req.query);
             const page = req.query.page
                 ? parseInt(req.query.page as string)
                 : 1;
@@ -32,6 +32,8 @@ app.get(
                 : 30;
 
             const offset = (page - 1) * itemsPerPage;
+
+            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
 
             const filters: BookFilterParams = {
                 title: req.query.title as string,
@@ -53,24 +55,24 @@ app.get(
             const filterConditions: SQL[] = [];
 
             if (filters.title) {
-                filterConditions.push(like(books.title, `%${filters.title}%`));
+                filterConditions.push(ilike(books.title, `%${filters.title}%`));
             }
 
             if (filters.author) {
                 filterConditions.push(
-                    like(books.author, `%${filters.author}%`),
+                    ilike(books.author, `%${filters.author}%`),
                 );
             }
 
             if (filters.category) {
                 filterConditions.push(
-                    like(books.category, `%${filters.category}%`),
+                    ilike(books.category, `%${filters.category}%`),
                 );
             }
 
             if (filters.publisher) {
                 filterConditions.push(
-                    like(books.publisher, `%${filters.publisher}%`),
+                    ilike(books.publisher, `%${filters.publisher}%`),
                 );
             }
 
@@ -84,9 +86,16 @@ app.get(
                 filterConditions.push(lte(books.publish_date, filters.endDate));
             }
 
-            filterConditions.push(eq(books.is_removed, false));
+            console.log("includeRemoved:", includeRemoved);
+            if (!includeRemoved) {
+                console.log("Filtering out removed books");
+                filterConditions.push(eq(books.is_removed, false));
+            }
 
             const whereCondition = and(...filterConditions);
+            
+            console.log("Filter conditions:", filterConditions);
+            console.log("Where condition:", whereCondition);
 
             let orderByClause;
 
@@ -119,6 +128,7 @@ app.get(
                 orderByClause = asc(books.title);
             }
 
+            console.log("About to execute search query...");
             const searchResults = await db
                 .select()
                 .from(books)
@@ -126,6 +136,8 @@ app.get(
                 .orderBy(orderByClause)
                 .limit(itemsPerPage)
                 .offset(offset);
+            
+            console.log("Raw search results count:", searchResults.length);
 
             const countQuery = db
                 .select({ count: sql`COUNT(*)`.mapWith(Number) })
@@ -135,6 +147,8 @@ app.get(
             const [countResult] = await countQuery;
             const totalCount = countResult?.count || 0;
             const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+            console.log("Search results:", searchResults);
 
             res.status(200).json({
                 data: searchResults,
@@ -156,82 +170,91 @@ app.get(
     },
 );
 
-app.get(
-    "/books/categories",
-    checkTokenMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const categories = await db
-                .select({ category: books.category })
-                .from(books)
-                .where(eq(books.is_removed, false))
-                .groupBy(books.category)
-                .orderBy(asc(books.category));
+// app.get(
+//     "/books/categories",
+//     checkTokenMiddleware,
+//     async (req: Request, res: Response, next: NextFunction) => {
+//         try {
+//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
-            const categoryList = categories.map((item) => item.category);
+//             const categories = await db
+//                 .select({ category: books.category })
+//                 .from(books)
+//                 .where(whereCondition)
+//                 .groupBy(books.category)
+//                 .orderBy(asc(books.category));
 
-            res.status(200).json(categoryList);
-        } catch (error) {
-            if (error instanceof AppError) return next(error);
-            return next(
-                new AppError(
-                    "Error while retrieving book categories",
-                    500,
-                    error,
-                ),
-            );
-        }
-    },
-);
+//             const categoryList = categories.map((item) => item.category);
 
-app.get(
-    "/books/publishers",
-    checkTokenMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const publishers = await db
-                .select({ publisher: books.publisher })
-                .from(books)
-                .where(eq(books.is_removed, false))
-                .groupBy(books.publisher)
-                .orderBy(asc(books.publisher));
+//             res.status(200).json(categoryList);
+//         } catch (error) {
+//             if (error instanceof AppError) return next(error);
+//             return next(
+//                 new AppError(
+//                     "Error while retrieving book categories",
+//                     500,
+//                     error,
+//                 ),
+//             );
+//         }
+//     },
+// );
 
-            const publisherList = publishers.map((item) => item.publisher);
+// app.get(
+//     "/books/publishers",
+//     checkTokenMiddleware,
+//     async (req: Request, res: Response, next: NextFunction) => {
+//         try {
+//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
-            res.status(200).json(publisherList);
-        } catch (error) {
-            if (error instanceof AppError) return next(error);
-            return next(
-                new AppError(
-                    "Error while retrieving book publishers",
-                    500,
-                    error,
-                ),
-            );
-        }
-    },
-);
+//             const publishers = await db
+//                 .select({ publisher: books.publisher })
+//                 .from(books)
+//                 .where(whereCondition)
+//                 .groupBy(books.publisher)
+//                 .orderBy(asc(books.publisher));
 
-app.get(
-    "/books/authors",
-    checkTokenMiddleware,
-    async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const authors = await db
-                .select({ author: books.author })
-                .from(books)
-                .where(eq(books.is_removed, false))
-                .groupBy(books.author)
-                .orderBy(asc(books.author));
+//             const publisherList = publishers.map((item) => item.publisher);
 
-            const authorList = authors.map((item) => item.author);
+//             res.status(200).json(publisherList);
+//         } catch (error) {
+//             if (error instanceof AppError) return next(error);
+//             return next(
+//                 new AppError(
+//                     "Error while retrieving book publishers",
+//                     500,
+//                     error,
+//                 ),
+//             );
+//         }
+//     },
+// );
 
-            res.status(200).json(authorList);
-        } catch (error) {
-            if (error instanceof AppError) return next(error);
-            return next(
-                new AppError("Error while retrieving book authors", 500, error),
-            );
-        }
-    },
-);
+// app.get(
+//     "/books/authors",
+//     checkTokenMiddleware,
+//     async (req: Request, res: Response, next: NextFunction) => {
+//         try {
+//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+
+//             const authors = await db
+//                 .select({ author: books.author })
+//                 .from(books)
+//                 .where(whereCondition)
+//                 .groupBy(books.author)
+//                 .orderBy(asc(books.author));
+
+//             const authorList = authors.map((item) => item.author);
+
+//             res.status(200).json(authorList);
+//         } catch (error) {
+//             if (error instanceof AppError) return next(error);
+//             return next(
+//                 new AppError("Error while retrieving book authors", 500, error),
+//             );
+//         }
+//     },
+// );

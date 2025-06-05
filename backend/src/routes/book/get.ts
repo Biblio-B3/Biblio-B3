@@ -13,12 +13,15 @@ app.get("/books", async (req: Request, res: Response, next: NextFunction) => {
         const page = req.query.page
             ? parseInt(req.query.page as string, 10)
             : 1;
+        const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
         const offset = (page - 1) * itemsPerPage;
+
+        const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
         const paginatedBooks = await db
             .select()
             .from(books)
-            .where(eq(books.is_removed, false))
+            .where(whereCondition)
             .orderBy(desc(books.publish_date))
             .limit(itemsPerPage)
             .offset(offset);
@@ -30,7 +33,7 @@ app.get("/books", async (req: Request, res: Response, next: NextFunction) => {
         const [totalCount] = await db
             .select({ count: sql`COUNT(*)`.mapWith(Number) })
             .from(books)
-            .where(eq(books.is_removed, false));
+            .where(whereCondition);
 
         const totalPages = Math.ceil(totalCount.count / itemsPerPage);
 
@@ -86,22 +89,24 @@ app.get(
             const page = req.query.page
                 ? parseInt(req.query.page as string, 10)
                 : 1;
+            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
             const offset = (page - 1) * itemsPerPage;
 
             const searchTerm = req.params.search;
 
+            const searchConditions = or(
+                ilike(books.title, `%${searchTerm}%`),
+                ilike(books.author, `%${searchTerm}%`),
+            );
+
+            const whereCondition = includeRemoved
+                ? searchConditions
+                : and(eq(books.is_removed, false), searchConditions);
+
             const paginatedBooks = await db
                 .select()
                 .from(books)
-                .where(
-                    and(
-                        eq(books.is_removed, false),
-                        or(
-                            ilike(books.title, `%${searchTerm}%`),
-                            ilike(books.author, `%${searchTerm}%`),
-                        ),
-                    ),
-                )
+                .where(whereCondition)
                 .orderBy(desc(books.publish_date))
                 .limit(itemsPerPage)
                 .offset(offset);
@@ -113,15 +118,7 @@ app.get(
             const [totalCount] = await db
                 .select({ count: sql`COUNT(*)`.mapWith(Number) })
                 .from(books)
-                .where(
-                    and(
-                        eq(books.is_removed, false),
-                        or(
-                            ilike(books.title, `%${searchTerm}%`),
-                            ilike(books.author, `%${searchTerm}%`),
-                        ),
-                    ),
-                );
+                .where(whereCondition);
 
             const totalPages = Math.ceil(totalCount.count / itemsPerPage);
 
