@@ -54,10 +54,12 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    let isMounted = true; // Flag pour éviter les mises à jour si le composant est démonté
+    
     const fetchLibrary = async () => {
       try {
         const res = await fetch("/api/library");
-        if (res.ok) {
+        if (res.ok && isMounted) {
           const data = await res.json();
           setLibraryName(data.name);
           setAddress(data.location);
@@ -66,10 +68,18 @@ export function LibraryProvider({ children }: { children: React.ReactNode }) {
           setOpeningHours(data.openingHours);
         }
       } catch (err) {
-        console.error("Erreur fetch library:", err);
+        if (isMounted) {
+          console.error("Erreur fetch library:", err);
+        }
       }
     };
+    
     fetchLibrary();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
