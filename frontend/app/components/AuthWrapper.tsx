@@ -14,7 +14,7 @@ type AuthWrapperProps = {
 
 const publicRoutes = ["/login", "/register", "/reset-password", "/books", "/"];
 
-const adminRoutes = ["/settings", "/reservations-history", "/stats", "/reviews", "/users", "/users/[id]"];
+const adminRoutes = ["/settings", "/reservations", "/stats", "/reviews", "/users", "/users/[id]"];
 
 type JwtPayload = {
   role?: string;
@@ -41,7 +41,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       setIsLoading(false);
       return;
     }
-    
+
     const token = getLocalStorageItem("auth_token");
 
     if (!token) {

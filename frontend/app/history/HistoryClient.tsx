@@ -25,16 +25,28 @@ import { fr } from "date-fns/locale";
 import { jwtDecode } from "jwt-decode";
 
 // ----- Types -----
+// Historique du user (le back doit renvoyer un tableau de ceci)
 interface UserHistory {
     id: number;
     date_read: string;
     book_title: string;
-    book_id: number;        // désormais obligatoire
-    copy_id: number;        // idem
+    book_id: number;
+    copy_id: number;
     user_first_name?: string;
     user_last_name?: string;
 }
 
+// Représentation d’une review existante
+interface UserReview {
+    id: number;
+    book_id: number;
+    copy_id: number;
+    description: string;
+    note: number;
+    condition: number;
+}
+
+// Payload du JWT (pour extraire user_id côté front)
 interface JwtPayload {
     user_id: number;
 }
@@ -42,19 +54,26 @@ interface JwtPayload {
 // ----- Composant principal -----
 export default function UserHistoryClient() {
     const [history, setHistory] = useState<UserHistory[]>([]);
+    const [userReviews, setUserReviews] = useState<Record<number, UserReview>>({});
+    //              ^------ dictionnaire indexé par book_id → UserReview
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Pour le dialogue de création / mise à jour
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState<UserHistory | null>(null);
-    const [submitting, setSubmitting] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
 
-    // États pour le formulaire de review
+    // Champs du formulaire
     const [description, setDescription] = useState("");
     const [note, setNote] = useState(0);
     const [condition, setCondition] = useState(0);
 
+    const [submitting, setSubmitting] = useState(false);
     const fetchWithAuth = useApiErrorHandler();
 
+    // Extrait user_id depuis le token
     const getUserIdFromToken = (): number | null => {
         const token = localStorage.getItem("auth_token");
         if (!token) return null;
@@ -66,9 +85,11 @@ export default function UserHistoryClient() {
         }
     };
 
-    // Récupération de l'historique utilisateur
+    // Au montage, on récupère à la fois :
+    //  1) l'historique (history)
+    //  2) toutes les reviews de ce user (userReviews)
     useEffect(() => {
-        const fetchUserHistory = async () => {
+        const fetchEverything = async () => {
             const userId = getUserIdFromToken();
             if (!userId) {
                 setError("Utilisateur non authentifié.");
@@ -77,15 +98,35 @@ export default function UserHistoryClient() {
             }
 
             try {
-                const res = await fetchWithAuth(`/api/users/${userId}/historical`, {
+                // 1) Récupérer l'historique de lecture
+                const resHist = await fetchWithAuth(`/api/users/${userId}/historical`, {
                     method: "GET",
                     headers: {
                         auth_token: `${localStorage.getItem("auth_token")}`,
                     },
                 });
-                if (!res.ok) throw new Error("Erreur lors de la récupération de l'historique");
-                const data: UserHistory[] = await res.json();
-                setHistory(data);
+                if (!resHist.ok)
+                    throw new Error("Erreur lors de la récupération de l'historique");
+                const dataHist: UserHistory[] = await resHist.json();
+                setHistory(dataHist);
+
+                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>)
+                const resRev = await fetchWithAuth(`/api/reviews?user_id=${userId}`, {
+                    method: "GET",
+                    headers: {
+                        auth_token: `${localStorage.getItem("auth_token")}`,
+                    },
+                });
+                if (!resRev.ok)
+                    throw new Error("Erreur lors de la récupération des reviews");
+                const dataRev: UserReview[] = await resRev.json();
+
+                // On transforme en dictionnaire { [book_id]: UserReview }
+                const revDict: Record<number, UserReview> = {};
+                dataRev.forEach((rev) => {
+                    revDict[rev.book_id] = rev;
+                });
+                setUserReviews(revDict);
             } catch (err) {
                 setError(err instanceof Error ? err.message : "Erreur inconnue");
             } finally {
@@ -93,40 +134,58 @@ export default function UserHistoryClient() {
             }
         };
 
-        fetchUserHistory();
+        fetchEverything();
     }, []);
 
     // Formatte la date en FR (dd-MM-yyyy)
     const formatDate = (dateString: string) => {
         if (!dateString) return "Date manquante";
         // Normalisation si la chaîne contient un espace
-        const normalized = dateString.includes(" ") ? dateString.replace(" ", "T") : dateString;
+        const normalized = dateString.includes(" ")
+            ? dateString.replace(" ", "T")
+            : dateString;
         const date = new Date(normalized);
         return isNaN(date.getTime())
             ? "Date invalide"
             : format(date, "dd-MM-yyyy", { locale: fr });
     };
 
-    // Ouvre le dialogue pour ajouter une review
-    const openReviewDialog = (item: UserHistory) => {
-        // On sait déjà que book_id et copy_id sont présents
+    // ************************
+    // ** OUVRIR LE DIALOGUE **
+    // ************************
+    const openReviewDialog = async (item: UserHistory) => {
         setError(null);
         setSelectedBook(item);
-        setDescription("");
-        setNote(0);
-        setCondition(0);
+
+        // Si l'utilisateur a déjà une review pour ce book_id, on passe en mode édition
+        const existingReview = userReviews[item.book_id];
+        if (existingReview) {
+            setIsEditing(true);
+            setEditingReviewId(existingReview.id);
+            setDescription(existingReview.description);
+            setNote(existingReview.note);
+            setCondition(existingReview.condition);
+        } else {
+            // nouveau review
+            setIsEditing(false);
+            setEditingReviewId(null);
+            setDescription("");
+            setNote(0);
+            setCondition(0);
+        }
+
         setDialogOpen(true);
     };
 
-    // Soumission de la review
+    // **********************
+    // ** SOUMISSION FORM **
+    // **********************
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         if (!selectedBook) {
             setError("Aucun livre sélectionné");
             return;
         }
-
         if (!description.trim()) {
             setError("La description est requise");
             return;
@@ -141,26 +200,65 @@ export default function UserHistoryClient() {
                 throw new Error("Token d'authentification manquant");
             }
 
-            const res = await fetchWithAuth(`/api/reviews`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    auth_token: `${localStorage.getItem("auth_token")}`,
-                },
-                body: JSON.stringify({
-                    book_id: selectedBook.book_id,
-                    copy_id: selectedBook.copy_id,
-                    description: description.trim(),
-                    note,
-                    condition,
-                }),
-            });
+            // Construction du payload commun
+            const payload = {
+                book_id: selectedBook.book_id,
+                copy_id: selectedBook.copy_id,
+                description: description.trim(),
+                note,
+                condition,
+            };
+
+            let res;
+            if (isEditing && editingReviewId) {
+                // Mise à jour (PUT)
+                res = await fetchWithAuth(`/api/reviews/${editingReviewId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        auth_token: `${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+            } else {
+                // Création (POST)
+                res = await fetchWithAuth(`/api/reviews`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        auth_token: `${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+            }
 
             if (res.ok) {
+                // On ferme le dialogue et on met à jour le state front
+                const jsonData = await res.json();
+
+                // Si c'était une création, on récupère l'ID de la nouvelle review dans la réponse
+                if (!isEditing) {
+                    // Supposons que le POST répond { id: <nouvel id>, book_id, copy_id, description, note, condition }
+                    const created: UserReview = jsonData;
+                    setUserReviews((old) => ({
+                        ...old,
+                        [created.book_id]: created,
+                    }));
+                } else {
+                    // En mise à jour, on re-synchronise le dictionnaire
+                    const updatedArray: UserReview[] = jsonData.updatedReview;
+                    // Par exemple, le backend renvoie { updatedReview: [ { id, book_id, ... } ] }
+                    if (Array.isArray(updatedArray) && updatedArray.length > 0) {
+                        const upd = updatedArray[0];
+                        setUserReviews((old) => ({
+                            ...old,
+                            [upd.book_id]: { ...upd },
+                        }));
+                    }
+                }
+
                 setDialogOpen(false);
                 setSelectedBook(null);
-                // **Optionnel** : on pourrait rafraîchir l'historique si on souhaite afficher automatiquement la nouvelle review
-                // await fetchUserHistory();
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(errorData.message || `Erreur ${res.status}: ${res.statusText}`);
@@ -177,6 +275,9 @@ export default function UserHistoryClient() {
 
     return (
         <div className="space-y-4">
+            {/* ============================
+           TABLEAU DE L’HISTORIQUE
+           ============================ */}
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -186,33 +287,49 @@ export default function UserHistoryClient() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {history.map((item) => (
-                        <TableRow key={item.id}>
-                            <TableCell>{item.book_title}</TableCell>
-                            <TableCell>{formatDate(item.date_read)}</TableCell>
-                            <TableCell>
-                                <Button size="sm" onClick={() => openReviewDialog(item)}>
-                                    Ajouter une review
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                    {history.map((item) => {
+                        // Si l’utilisateur a déjà posté une review pour ce book_id
+                        const alreadyReviewed = Boolean(userReviews[item.book_id]);
+                        return (
+                            <TableRow key={item.id}>
+                                <TableCell>{item.book_title}</TableCell>
+                                <TableCell>{formatDate(item.date_read)}</TableCell>
+                                <TableCell>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => openReviewDialog(item)}
+                                    >
+                                        {alreadyReviewed ? "Modifier mon avis" : "Ajouter un avis"}
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
 
+            {/* ============================
+           DIALOGUE CREATE / UPDATE
+           ============================ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogDescription>
-                            Créez votre review pour :{" "}
-                            <strong>{selectedBook?.book_title ?? "Livre sélectionné"}</strong>
+                            {isEditing
+                                ? "Modifiez votre review pour : "
+                                : "Créez votre review pour : "}
+                            <strong>
+                                {selectedBook?.book_title ?? "Livre sélectionné"}
+                            </strong>
                         </DialogDescription>
                     </DialogHeader>
+
                     {error && (
                         <div className="text-red-500 text-sm mb-4">
                             {error}
                         </div>
                     )}
+
                     <form onSubmit={handleReviewSubmit} className="space-y-4">
                         <div>
                             <Label htmlFor="description">Description *</Label>
@@ -224,6 +341,7 @@ export default function UserHistoryClient() {
                                 required
                             />
                         </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="note">Note (0-5) *</Label>
@@ -252,6 +370,7 @@ export default function UserHistoryClient() {
                                 />
                             </div>
                         </div>
+
                         <div className="flex justify-end gap-2">
                             <Button
                                 type="button"
@@ -264,8 +383,17 @@ export default function UserHistoryClient() {
                             >
                                 Annuler
                             </Button>
-                            <Button type="submit" disabled={submitting || !description.trim()}>
-                                {submitting ? "Envoi..." : "Envoyer"}
+                            <Button
+                                type="submit"
+                                disabled={submitting || !description.trim()}
+                            >
+                                {submitting
+                                    ? isEditing
+                                        ? "Mise à jour..."
+                                        : "Envoi..."
+                                    : isEditing
+                                        ? "Modifier mon avis"
+                                        : "Ajouter un avis"}
                             </Button>
                         </div>
                     </form>

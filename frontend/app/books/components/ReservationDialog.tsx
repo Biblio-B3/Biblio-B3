@@ -12,6 +12,7 @@ import { useUserRole } from "@/app/hooks/useUserRole";
 import { jwtDecode } from "jwt-decode";
 import { authFetch, useAuthFetch } from "@/app/utils/authFetch";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 type ReservationDialogProps = {
   isOpen: boolean;
@@ -64,7 +65,8 @@ export const ReservationDialog = ({
     const fetchUsers = async () => {
       try {
         const response = await authFetch("/api/users", {
-          method: "GET"
+          method: "GET",
+          headers: { auth_token: `${localStorage.getItem("auth_token")}` }
         });
         if (response.ok) {
           const data = await response.json();
@@ -132,6 +134,7 @@ export const ReservationDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
+        <DialogTitle>Reservation</DialogTitle>
         <DialogHeader>
           <DialogDescription>
             {role === "admin"
