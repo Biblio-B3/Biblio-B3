@@ -86,9 +86,9 @@ export default function UserHistoryClient() {
         }
     };
 
-    // Au montage, on récupère à la fois :
-    //  1) l'historique (history)
-    //  2) toutes les reviews de ce user (userReviews)
+    // Au montage, on récupère :
+    //  1) l'historique (history) en utilisant fetch direct pour intercepter le 404
+    //  2) si historique existe, on récupère les reviews (userReviews)
     useEffect(() => {
         const fetchEverything = async () => {
             const userId = getUserIdFromToken();
@@ -99,8 +99,8 @@ export default function UserHistoryClient() {
             }
 
             try {
-                // 1) Récupérer l'historique de lecture
-                const resHist = await fetchWithAuth(`/api/users/${userId}/historical`, {
+                // 1) Récupérer l'historique de lecture AVEC fetch direct
+                const resHist = await fetch(`/api/users/${userId}/historical`, {
                     method: "GET",
                     headers: {
                         auth_token: `${localStorage.getItem("auth_token")}`,
@@ -123,7 +123,7 @@ export default function UserHistoryClient() {
                 const dataHist: UserHistory[] = await resHist.json();
                 setHistory(dataHist);
 
-                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>)
+                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>) via fetchWithAuth
                 const resRev = await fetchWithAuth(`/api/reviews?user_id=${userId}`, {
                     method: "GET",
                     headers: {
@@ -155,7 +155,6 @@ export default function UserHistoryClient() {
     // Formatte la date en FR (dd-MM-yyyy)
     const formatDate = (dateString: string) => {
         if (!dateString) return "Date manquante";
-        // Normalisation si la chaîne contient un espace
         const normalized = dateString.includes(" ")
             ? dateString.replace(" ", "T")
             : dateString;
