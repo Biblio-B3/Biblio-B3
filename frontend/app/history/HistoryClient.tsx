@@ -58,6 +58,7 @@ export default function UserHistoryClient() {
     //              ^------ dictionnaire indexé par book_id → UserReview
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [noHistory, setNoHistory] = useState(false);
 
     // Pour le dialogue de création / mise à jour
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -105,8 +106,20 @@ export default function UserHistoryClient() {
                         auth_token: `${localStorage.getItem("auth_token")}`,
                     },
                 });
-                if (!resHist.ok)
+
+                if (resHist.status === 404) {
+                    // L'utilisateur n'a pas d'historique → on bascule en noHistory
+                    setNoHistory(true);
+                    setLoading(false);
+                    return;
+                }
+
+                if (!resHist.ok) {
+                    // Toute autre erreur (500, 401, etc.)
                     throw new Error("Erreur lors de la récupération de l'historique");
+                }
+
+                // Si OK, on parse les données
                 const dataHist: UserHistory[] = await resHist.json();
                 setHistory(dataHist);
 
@@ -117,10 +130,12 @@ export default function UserHistoryClient() {
                         auth_token: `${localStorage.getItem("auth_token")}`,
                     },
                 });
-                if (!resRev.ok)
-                    throw new Error("Erreur lors de la récupération des reviews");
-                const dataRev: UserReview[] = await resRev.json();
 
+                if (!resRev.ok) {
+                    throw new Error("Erreur lors de la récupération des reviews");
+                }
+
+                const dataRev: UserReview[] = await resRev.json();
                 // On transforme en dictionnaire { [book_id]: UserReview }
                 const revDict: Record<number, UserReview> = {};
                 dataRev.forEach((rev) => {
@@ -150,9 +165,6 @@ export default function UserHistoryClient() {
             : format(date, "dd-MM-yyyy", { locale: fr });
     };
 
-    // ************************
-    // ** OUVRIR LE DIALOGUE **
-    // ************************
     const openReviewDialog = async (item: UserHistory) => {
         setError(null);
         setSelectedBook(item);
@@ -177,9 +189,6 @@ export default function UserHistoryClient() {
         setDialogOpen(true);
     };
 
-    // **********************
-    // ** SOUMISSION FORM **
-    // **********************
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedBook) {
@@ -236,18 +245,16 @@ export default function UserHistoryClient() {
                 // On ferme le dialogue et on met à jour le state front
                 const jsonData = await res.json();
 
-                // Si c'était une création, on récupère l'ID de la nouvelle review dans la réponse
                 if (!isEditing) {
-                    // Supposons que le POST répond { id: <nouvel id>, book_id, copy_id, description, note, condition }
+                    // Si c'était une création, on récupère l'ID de la nouvelle review dans la réponse
                     const created: UserReview = jsonData;
                     setUserReviews((old) => ({
                         ...old,
                         [created.book_id]: created,
                     }));
                 } else {
-                    // En mise à jour, on re-synchronise le dictionnaire
+                    // En mise à jour, on s’attend à { updatedReview: [ { … } ] }
                     const updatedArray: UserReview[] = jsonData.updatedReview;
-                    // Par exemple, le backend renvoie { updatedReview: [ { id, book_id, ... } ] }
                     if (Array.isArray(updatedArray) && updatedArray.length > 0) {
                         const upd = updatedArray[0];
                         setUserReviews((old) => ({
@@ -273,6 +280,17 @@ export default function UserHistoryClient() {
     if (loading) return <p>Chargement de l'historique...</p>;
     if (error && !dialogOpen) return <p className="text-red-500">{error}</p>;
 
+    // === Cas "aucun historique" ===
+    if (noHistory) {
+        return (
+            <div className="space-y-4">
+                <h2 className="text-2xl font-bold">Vous n'avez pas encore d'historique</h2>
+                <p>Une fois que vous aurez lu un livre, votre historique apparaîtra ici.</p>
+            </div>
+        );
+    }
+
+    // === Sinon, on affiche la table + le dialogue ===
     return (
         <div className="space-y-4">
             {/* ============================
@@ -288,17 +306,13 @@ export default function UserHistoryClient() {
                 </TableHeader>
                 <TableBody>
                     {history.map((item) => {
-                        // Si l’utilisateur a déjà posté une review pour ce book_id
                         const alreadyReviewed = Boolean(userReviews[item.book_id]);
                         return (
                             <TableRow key={item.id}>
                                 <TableCell>{item.book_title}</TableCell>
                                 <TableCell>{formatDate(item.date_read)}</TableCell>
                                 <TableCell>
-                                    <Button
-                                        size="sm"
-                                        onClick={() => openReviewDialog(item)}
-                                    >
+                                    <Button size="sm" onClick={() => openReviewDialog(item)}>
                                         {alreadyReviewed ? "Modifier mon avis" : "Ajouter un avis"}
                                     </Button>
                                 </TableCell>
@@ -318,17 +332,11 @@ export default function UserHistoryClient() {
                             {isEditing
                                 ? "Modifiez votre review pour : "
                                 : "Créez votre review pour : "}
-                            <strong>
-                                {selectedBook?.book_title ?? "Livre sélectionné"}
-                            </strong>
+                            <strong>{selectedBook?.book_title ?? "Livre sélectionné"}</strong>
                         </DialogDescription>
                     </DialogHeader>
 
-                    {error && (
-                        <div className="text-red-500 text-sm mb-4">
-                            {error}
-                        </div>
-                    )}
+                    {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
 
                     <form onSubmit={handleReviewSubmit} className="space-y-4">
                         <div>
@@ -337,7 +345,7 @@ export default function UserHistoryClient() {
                                 id="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Votre avis sur ce livre..."
+                                placeholder="Votre avis sur ce livre…"
                                 required
                             />
                         </div>
@@ -383,14 +391,11 @@ export default function UserHistoryClient() {
                             >
                                 Annuler
                             </Button>
-                            <Button
-                                type="submit"
-                                disabled={submitting || !description.trim()}
-                            >
+                            <Button type="submit" disabled={submitting || !description.trim()}>
                                 {submitting
                                     ? isEditing
-                                        ? "Mise à jour..."
-                                        : "Envoi..."
+                                        ? "Mise à jour…"
+                                        : "Envoi…"
                                     : isEditing
                                         ? "Modifier mon avis"
                                         : "Ajouter un avis"}
