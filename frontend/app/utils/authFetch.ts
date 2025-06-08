@@ -23,9 +23,9 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
 
   // Ajouter le token d'authentification aux en-têtes si disponible
   const headers = {
-    ...options.headers,
-    ...(token && { Authorization: `Bearer ${token}` }),
     "Content-Type": "application/json",
+    ...options.headers,
+    ...(token ? { auth_token: token } : {}),
   };
 
   // Effectuer la requête
@@ -68,9 +68,9 @@ export const useAuthFetch = () => {
 
     // Ajouter le token d'authentification aux en-têtes si disponible
     const headers = {
-      ...options.headers,
-      ...(token && { Authorization: `Bearer ${token}` }),
       "Content-Type": "application/json",
+      ...options.headers,
+      ...(token ? { auth_token: token } : {}),
     };
 
     // Effectuer la requête
