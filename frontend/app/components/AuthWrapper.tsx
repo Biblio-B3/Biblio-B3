@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { jwtDecode } from "jwt-decode";
 import { isClient, getLocalStorageItem } from "../utils/isClient";
+import NotFound from "../not-found";
 
 import type React from "react";
 
@@ -12,7 +13,7 @@ type AuthWrapperProps = {
   children: React.ReactNode;
 };
 
-const publicRoutes = ["/login", "/register", "/reset-password", "/books", "/"];
+const publicRoutes = ["/login", "/register", "/reset-password", "/books", "/", "/not-found"];
 
 const adminRoutes = ["/settings", "/reservations", "/stats", "/reviews", "/users", "/users/[id]"];
 
@@ -33,7 +34,20 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   };
 
   const isAdminRoute = (path: string) => {
-    return adminRoutes.includes(path);
+    // Vérification directe pour les routes exactes
+    if (adminRoutes.includes(path)) {
+      return true;
+    }
+    
+    // Vérification pour les routes dynamiques comme /users/[id]
+    return adminRoutes.some(route => {
+      if (route.includes('[id]')) {
+        const routePattern = route.replace('[id]', '\\d+');
+        const regex = new RegExp(`^${routePattern}$`);
+        return regex.test(path);
+      }
+      return false;
+    });
   };
 
   useEffect(() => {
@@ -59,12 +73,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       const role = decoded.role || null;
       setUserRole(role);
 
-      if (isAdminRoute(pathname) && role !== "admin") {
-        router.push("/books");
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
+      // Ne plus rediriger ici, on gère l'affichage dans le rendu
+      setIsAuthenticated(true);
 
       if (isPublicRoute(pathname)) {
         setIsAuthenticated(true);
@@ -106,9 +116,16 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
       return null; // Ne rien rendre, la redirection est en cours
     }
 
-    // Route admin : vérifier le rôle admin
+    // Route admin : vérifier le rôle admin et afficher 404 avec sidebar si non autorisé
     if (isAdminRoute(pathname) && userRole !== "admin") {
-      return null; // Ne rien rendre, la redirection est en cours
+      return (
+        <div className="flex h-screen bg-background text-foreground">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto p-8">
+            <NotFound />
+          </main>
+        </div>
+      );
     }
   }
 
