@@ -1,15 +1,17 @@
 import UserHistoryClient from "./UserHistoryClient";
 
 type Props = {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 };
 
-export default function UserHistoryPage({ params }: Props) {
+export default async function UserHistoryPage({ params }: Props) {
+    const { id } = await params;
+    
     return (
         <div className="space-y-4">
-            <UserHistoryClient userId={params.id} />
+            <UserHistoryClient userId={id} />
         </div>
     );
 }
