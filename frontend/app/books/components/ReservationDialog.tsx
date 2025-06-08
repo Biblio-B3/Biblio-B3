@@ -38,11 +38,26 @@ export const ReservationDialog = ({
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasShownError, setHasShownError] = useState(false);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const role = useUserRole();
   const authFetchHook = useAuthFetch();
 
-  // ✅ Si c’est un user, on extrait directement son ID du token
+  useEffect(() => {
+    if (!isOpen && hasShownError) {
+      window.location.reload();
+      setHasShownError(false);
+    }
+  }, [isOpen, hasShownError]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setErrorMessage(null);
+      setHasShownError(false);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isClient) return;
 
@@ -59,7 +74,6 @@ export const ReservationDialog = ({
     }
   }, [role]);
 
-  // ✅ Si admin : fetch users pour recherche email
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -122,8 +136,23 @@ export const ReservationDialog = ({
         if (onSuccess) {
           onSuccess();
         }
+        window.location.reload();
       } else {
-        console.error("Erreur lors de la création de la réservation:", response.statusText);
+        try {
+          const errorData = await response.json();
+          if (response.status === 409 && errorData.message === "This copy is already reserved.") {
+            setErrorMessage("Cette copie est déjà réservée par un autre utilisateur.");
+            setHasShownError(true);
+          } else {
+            console.error("Erreur lors de la création de la réservation:", errorData.message || response.statusText);
+            setErrorMessage(errorData.message || response.statusText);
+            setHasShownError(true);
+          }
+        } catch (parseError) {
+          console.error("Erreur lors de la création de la réservation:", response.statusText);
+          setErrorMessage(response.statusText);
+          setHasShownError(true);
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la création de la réservation:", error);
@@ -140,11 +169,16 @@ export const ReservationDialog = ({
               ? "Sélectionnez l'utilisateur et les dates de réservation."
               : "Sélectionnez uniquement la date de fin de votre réservation."}
           </DialogDescription>
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="font-medium">Erreur</p>
+              <p>{errorMessage}</p>
+            </div>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleReservationSubmit}>
           <div className="grid gap-4 py-4">
-            {/* ✅ Si admin : recherche utilisateur */}
             {role === "admin" && (
               <>
                 <div className="relative">
@@ -176,20 +210,9 @@ export const ReservationDialog = ({
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-1 gap-2">
-                  <Label htmlFor="userId">User ID</Label>
-                  <Input
-                    id="userId"
-                    type="number"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    required
-                  />
-                </div>
               </>
             )}
 
-            {/* ✅ Date début et fin (date de début = aujourd’hui, désactivée) */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label htmlFor="startDate">Date de début</Label>
