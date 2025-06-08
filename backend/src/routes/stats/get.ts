@@ -299,8 +299,8 @@ app.get(
                     user_id: users.id,
                     user_name: sql<string>`${users.first_name} || ' ' || ${users.last_name}`,
                     total_overdue: sql<number>`COUNT(${reservation.id})`,
-                    average_days_overdue: sql<number>`ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2)`,
-                    longest_overdue: sql<number>`MAX(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))`
+                    average_days_overdue: sql<number>`COALESCE(ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2), 0)`,
+                    longest_overdue: sql<number>`COALESCE(MAX(EXTRACT(DAY FROM (${now} - ${reservation.final_date}))), 0)`
                 })
                 .from(reservation)
                 .innerJoin(users, eq(reservation.user_id, users.id))
@@ -316,7 +316,7 @@ app.get(
                     book_title: books.title,
                     book_author: books.author,
                     total_overdue: sql<number>`COUNT(${reservation.id})`,
-                    average_days_overdue: sql<number>`ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2)`
+                    average_days_overdue: sql<number>`COALESCE(ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2), 0)`
                 })
                 .from(reservation)
                 .innerJoin(copy, eq(reservation.copy_id, copy.id))
@@ -330,9 +330,9 @@ app.get(
             const [overdueGlobalStats] = await db
                 .select({
                     total_overdue_reservations: sql<number>`COUNT(${reservation.id})`,
-                    average_days_overdue: sql<number>`ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2)`,
-                    longest_overdue_days: sql<number>`MAX(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))`,
-                    overdue_rate: sql<number>`ROUND((COUNT(${reservation.id})::numeric / (SELECT COUNT(*) FROM reservation)::numeric) * 100, 2)`
+                    average_days_overdue: sql<number>`COALESCE(ROUND(AVG(EXTRACT(DAY FROM (${now} - ${reservation.final_date})))::numeric, 2), 0)`,
+                    longest_overdue_days: sql<number>`COALESCE(MAX(EXTRACT(DAY FROM (${now} - ${reservation.final_date}))), 0)`,
+                    overdue_rate: sql<number>`CASE WHEN (SELECT COUNT(*) FROM reservation) > 0 THEN ROUND((COUNT(${reservation.id})::numeric / (SELECT COUNT(*) FROM reservation)::numeric) * 100, 2) ELSE 0 END`
                 })
                 .from(reservation)
                 .where(lte(reservation.final_date, now));
