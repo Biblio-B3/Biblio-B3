@@ -61,6 +61,13 @@ export const selectReviewSchema = createSelectSchema(review, {
     created_at: z.coerce.date(),
 });
 
+// Schéma pour les reviews avec les informations utilisateur et livre (pour les jointures)
+export const selectReviewWithUserSchema = selectReviewSchema.extend({
+    user_first_name: z.string(),
+    user_last_name: z.string(),
+    book_title: z.string().optional(),
+});
+
 export const updateReviewSchema = createInsertSchema(review, {
     description: (schema) =>
         schema.description

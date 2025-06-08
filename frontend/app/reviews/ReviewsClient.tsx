@@ -10,8 +10,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -21,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetch } from "@/app/utils/authFetch";
+import { DeleteReviewButton } from "./components/DeleteReviewButton";
 
 type Review = {
   id: number;
@@ -62,21 +61,10 @@ export default function ReviewsClient() {
     fetchReviews();
   }, []);
 
-  const handleDeleteReview = async (id: number) => {
-    try {
-      const response = await authFetch(`/api/reviews/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok)
-        throw new Error("Erreur lors de la suppression de l'évaluation");
-
-      setReviews((prevReviews) =>
-        prevReviews.filter((review) => review.id !== id)
-      );
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Erreur inconnue");
-    }
+  const handleReviewDeleted = (reviewId: number) => {
+    setReviews((prevReviews) =>
+      prevReviews.filter((review) => review.id !== reviewId)
+    );
   };
 
   return (
@@ -126,13 +114,10 @@ export default function ReviewsClient() {
                 <TableCell>{review.condition}</TableCell>
                 <TableCell>{review.description}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteReview(review.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <DeleteReviewButton
+                    reviewId={review.id}
+                    onDeleted={handleReviewDeleted}
+                  />
                 </TableCell>
               </TableRow>
             ))}

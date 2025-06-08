@@ -1,7 +1,7 @@
 import { app } from "../..";
 import { db } from "../../app/config/database";
 import { eq, desc, sql } from "drizzle-orm";
-import { review, selectReviewSchema } from "../../db/schema/review";
+import { review, selectReviewSchema, selectReviewWithUserSchema } from "../../db/schema/review";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
@@ -98,11 +98,12 @@ app.get(
                 res.status(404).json({
                     message: "No reviews found for this book.",
                 });
+                return;
             }
 
-            // Valider chaque review dans le schema zod (ou ce que vous utilisez)
+            // Valider chaque review dans le schema zod avec les informations utilisateur
             const validatedReviews = paginatedReviews.map((r) =>
-                selectReviewSchema.parse(r)
+                selectReviewWithUserSchema.parse(r)
             );
 
             // Calculer le nombre total de reviews pour la pagination
@@ -119,6 +120,7 @@ app.get(
                 res.status(404).json({
                     message: `Page ${page} does not exist (only ${totalPages} pages).`,
                 });
+                return;
             }
 
             // Construire la réponse paginée

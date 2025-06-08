@@ -252,7 +252,6 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       </div>
 
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Exemplaires disponibles</h2>
         {userRole === "admin" && (
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>

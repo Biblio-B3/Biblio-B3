@@ -43,44 +43,39 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         const response = await authFetch(
           `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`
         );
-
+        console.log("Response review data:", response);
         if (!isMounted) return;
+
+        if (response.status === 404) {
+          console.log("404 detected - no reviews found");
+          setReviews([]);
+          setPagination({
+            page: 1,
+            total: 0,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+            itemsPerPage: itemsPerPage,
+          });
+          setError(null);
+          setLoading(false);
+          return;
+        }
+
+        // Vérifier si la réponse est OK
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const data = await response.json();
 
-        const reviewsWithUserInfo = await Promise.all(
-          data.data.map(async (review: Review) => {
-            try {
-              const userResponse = await authFetch(
-                `/api/users/${review.user_id}`,
-                {
-                  headers: {
-                    auth_token: `${localStorage.getItem("auth_token")}`,
-                  },
-                }
-              );
-              if (userResponse.ok) {
-                const userData = await userResponse.json();
-                return {
-                  ...review,
-                  user: {
-                    first_name: userData.user_first_name || "Inconnu",
-                    last_name: userData.user_last_name || "Inconnu",
-                  },
-                };
-              }
-            } catch {
-              // fallback user unknown
-            }
-            return {
-              ...review,
-              user: {
-                first_name: "Inconnu",
-                last_name: "Inconnu",
-              },
-            };
-          })
-        );
+        const reviewsWithUserInfo = data.data.map((review: Review) => ({
+          ...review,
+          user: {
+            first_name: review.user_first_name || "Inconnu",
+            last_name: review.user_last_name || "Inconnu",
+          },
+        }));
 
         if (isMounted) {
           setReviews(reviewsWithUserInfo);
@@ -91,24 +86,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         console.log("Caught error:", err);
         
         if (isMounted) {
-          // Vérifier si c'est une erreur 404 (aucun avis)
-          if (err?.message === "No reviews found for this book.") {
-            console.log("404 detected in catch - no reviews");
-            // Cas avec 0 review
-            setReviews([]);
-            setPagination({
-              page: 1,
-              total: 0,
-              totalPages: 1,
-              hasNextPage: false,
-              hasPreviousPage: false,
-              itemsPerPage: itemsPerPage,
-            });
-            setError(null); // Pas d'erreur pour ce cas
-          } else {
-            // Vraie erreur
-            setError("Erreur lors de la récupération des avis");
-          }
+          setError("Erreur lors de la récupération des avis");
           setLoading(false);
         }
       }
@@ -120,6 +98,35 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
       isMounted = false;
     };
   }, [bookId, currentPage]);
+
+  const handleReviewDeleted = (reviewId: number) => {
+    // Supprimer l'avis de la liste locale
+    const updatedReviews = reviews.filter((review) => review.id !== reviewId);
+    setReviews(updatedReviews);
+
+    // Mettre à jour la pagination
+    if (pagination) {
+      const newTotal = pagination.total - 1;
+      const newTotalPages = newTotal > 0 ? Math.ceil(newTotal / pagination.itemsPerPage) : 1;
+      
+      setPagination({
+        ...pagination,
+        total: newTotal,
+        totalPages: newTotalPages,
+        hasNextPage: currentPage < newTotalPages,
+      });
+
+      // Si la page actuelle n'a plus d'éléments et qu'il y a des pages précédentes
+      if (updatedReviews.length === 0 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    }
+
+    // S'assurer qu'il n'y a pas d'erreur affichée quand on supprime la dernière review
+    if (updatedReviews.length === 0) {
+      setError(null);
+    }
+  };
 
   console.log("Current state:", { reviews: reviews.length, error, loading, pagination });
 
@@ -141,7 +148,11 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         <>
           <div className="grid grid-cols-1 gap-4">
             {reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
+              <ReviewCard
+                key={review.id}
+                review={review}
+                onDeleted={handleReviewDeleted}
+              />
             ))}
           </div>
 
