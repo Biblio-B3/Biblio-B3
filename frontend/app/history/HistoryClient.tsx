@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { jwtDecode } from "jwt-decode";
@@ -73,7 +72,6 @@ export default function UserHistoryClient() {
     const [condition, setCondition] = useState(0);
 
     const [submitting, setSubmitting] = useState(false);
-    const fetchWithAuth = useApiErrorHandler();
 
     // Extrait user_id depuis le token
     const getUserIdFromToken = (): number | null => {
@@ -121,7 +119,7 @@ export default function UserHistoryClient() {
                 const dataHist: UserHistory[] = await resHist.json();
                 setHistory(dataHist);
 
-                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>) via fetchWithAuth
+                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>) via authFetch
                 const resRev = await authFetch(`/api/reviews?user_id=${userId}`);
 
                 if (!resRev.ok) {
@@ -213,7 +211,7 @@ export default function UserHistoryClient() {
             let res;
             if (isEditing && editingReviewId) {
                 // Mise à jour (PUT)
-                res = await fetchWithAuth(`/api/reviews/${editingReviewId}`, {
+                res = await authFetch(`/api/reviews/${editingReviewId}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -223,7 +221,7 @@ export default function UserHistoryClient() {
                 });
             } else {
                 // Création (POST)
-                res = await fetchWithAuth(`/api/reviews`, {
+                res = await authFetch(`/api/reviews`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

@@ -13,8 +13,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useApiErrorHandler } from "../components/DisconnectAfterRevocation";
 import { jwtDecode } from "jwt-decode";
+import { authFetch } from "@/app/utils/authFetch";
 
 type Reservation = {
     id: number;
@@ -33,7 +33,6 @@ export default function UserReservations() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-    const fetchWithAuth = useApiErrorHandler();
 
     const getUserIdFromToken = (): number | null => {
         const token = localStorage.getItem("auth_token");
@@ -61,7 +60,7 @@ export default function UserReservations() {
 
             try {
                 // On appelle la route telle qu'elle existe sur le backend :
-                const response = await fetchWithAuth(`/api/reservations/${userId}`, {
+                const response = await authFetch(`/api/reservations/${userId}`, {
                     headers: {
                         auth_token: localStorage.getItem("auth_token") || "",
                     },
@@ -117,7 +116,7 @@ export default function UserReservations() {
 
     const handleDelete = async (id: number) => {
         try {
-            const response = await fetchWithAuth(`/api/reservations/${id}`, {
+            const response = await authFetch(`/api/reservations/${id}`, {
                 method: "DELETE",
                 headers: {
                     auth_token: localStorage.getItem("auth_token") || "",

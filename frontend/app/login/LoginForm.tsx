@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLibrary } from "../components/LibraryContext";
 
 export const CheckUserId = (token: string) => {
@@ -25,8 +26,22 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Vérifier si l'utilisateur a été redirigé à cause d'un token expiré
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log('URL params:', window.location.search);
+      console.log('Expired param:', urlParams.get('expired'));
+      if (urlParams.get('expired') === 'true') {
+        console.log('Setting expired message to true');
+        setShowExpiredMessage(true);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +119,14 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {showExpiredMessage && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            Votre session a expiré. Veuillez vous reconnecter pour continuer.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div>
         <Label htmlFor="email">Email</Label>
         <Input

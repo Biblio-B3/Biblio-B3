@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Review, Pagination } from "./types";
 import { ReviewCard } from "./ReviewCard";
 import { Button } from "@/components/ui/button";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
+
 
 type ReviewsListProps = {
   bookId: string;
@@ -16,7 +17,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fetchWithAuth = useApiErrorHandler();
 
   const itemsPerPage = 10;
 
@@ -40,13 +40,8 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
       setError(null);
 
       try {
-        const response = await fetchWithAuth(
-          `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`,
-          {
-            headers: {
-              auth_token: `${localStorage.getItem("auth_token")}`,
-            },
-          }
+        const response = await authFetch(
+          `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`
         );
 
         if (!isMounted) return;
@@ -56,7 +51,7 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         const reviewsWithUserInfo = await Promise.all(
           data.data.map(async (review: Review) => {
             try {
-              const userResponse = await fetchWithAuth(
+              const userResponse = await authFetch(
                 `/api/users/${review.user_id}`,
                 {
                   headers: {

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogDescription } from "@/compon
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+
 import { useUserRole } from "@/app/hooks/useUserRole";
 import { jwtDecode } from "jwt-decode";
 import { authFetch, useAuthFetch } from "@/app/utils/authFetch";
@@ -39,7 +39,6 @@ export const ReservationDialog = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const fetchWithAuth = useApiErrorHandler();
   const role = useUserRole();
   const authFetchHook = useAuthFetch();
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Copy } from "./types";
 import { CopyCard } from "./CopyCard";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
 import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ ajout du hook
 // Removed authFetch import as we're using fetch directly now
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
@@ -17,7 +17,6 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataFetched, setDataFetched] = useState(false);
-  const fetchWithAuth = useApiErrorHandler();
   const role = useUserRole(); // ✅ rôle récupéré
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -61,7 +60,7 @@ export const CopiesList = ({ bookId }: CopiesListProps) => {
     return () => {
       isMounted = false;
     };
-  }, [bookId, fetchWithAuth, dataFetched]);
+  }, [bookId, authFetch, dataFetched]);
 
   const handleDeleteCopy = async (copyId: number) => {
     const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette copie ?");

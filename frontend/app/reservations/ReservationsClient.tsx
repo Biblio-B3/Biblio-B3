@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
 
 import { toast } from "@/components/ui/use-toast";
 
@@ -40,19 +40,13 @@ type Reservation = {
 export default function ReservationsClient() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const fetchWithAuth = useApiErrorHandler();
 
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await fetchWithAuth("/api/reservations", {
-          method: "GET",
-          headers: {
-            auth_token: `${localStorage.getItem("auth_token")}`,
-          },
-        });
+        const response = await authFetch("/api/reservations");
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Erreur lors de la récupération des réservations");
@@ -84,7 +78,7 @@ export default function ReservationsClient() {
       : `/api/copy/${copyId}/unclaimed`;
 
     try {
-      const response = await fetchWithAuth(route, {
+      const response = await authFetch(route, {
         method: "PUT",
         headers: {
           auth_token: `${localStorage.getItem("auth_token")}`,
@@ -108,7 +102,7 @@ export default function ReservationsClient() {
 
   const handleDeleteReservation = async (id: number) => {
     try {
-      const response = await fetchWithAuth(`/api/reservations/${id}`, {
+      const response = await authFetch(`/api/reservations/${id}`, {
         method: "DELETE",
         headers: {
           auth_token: `${localStorage.getItem("auth_token")}`,

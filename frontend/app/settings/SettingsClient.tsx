@@ -139,14 +139,19 @@ export default function ProfileClient() {
         method: "PUT",
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error();
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erreur inconnue" }));
+        throw new Error(errorData.message || `Erreur ${res.status}: ${res.statusText}`);
+      }
+      
       toast({ title: "Succès", description: "Profil mis à jour." });
       
       // Recharger la page immédiatement après la sauvegarde réussie
       window.location.reload();
     } catch (error) {
-      console.error("handleSubmit error", error);
-      toast({ title: "Erreur", description: "Impossible de sauvegarder.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Impossible de sauvegarder.";
+      toast({ title: "Erreur", description: errorMessage, variant: "destructive" });
     }
   };
 

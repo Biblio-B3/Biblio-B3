@@ -29,7 +29,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { CopiesList } from "./CopiesList";
 import { ReviewsList } from "./ReviewsList";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
 import { useUserRole } from "@/app/hooks/useUserRole";
 
 type BookDetailsProps = {
@@ -43,7 +43,6 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
   const [dataFetched, setDataFetched] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const fetchWithAuth = useApiErrorHandler();
   const userRole = useUserRole();
   const [numberOfCopies, setNumberOfCopies] = useState("");
   const [copyState, setCopyState] = useState("");
@@ -55,7 +54,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
     try {
       for (let i = 0; i < parseInt(numberOfCopies); i++) {
-        await fetchWithAuth("/api/copy", {
+        await authFetch("/api/copy", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -109,11 +108,11 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     return () => {
       isMounted = false;
     };
-  }, [bookId, fetchWithAuth, dataFetched]);
+  }, [bookId, authFetch, dataFetched]);
 
   const handleDeleteBook = async () => {
     try {
-      const response = await fetchWithAuth(`/api/books/${bookId}`, {
+      const response = await authFetch(`/api/books/${bookId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -135,7 +134,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
   const handleArchiveBook = async () => {
     try {
-      const response = await fetchWithAuth(`/api/books/${bookId}/archiving`, {
+      const response = await authFetch(`/api/books/${bookId}/archiving`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

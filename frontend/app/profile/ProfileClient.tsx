@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { getLocalStorageItem } from "@/app/utils/isClient";
-import { useApiErrorHandler } from "../components/DisconnectAfterRevocation";
 import { CheckUserId } from "@/app/login/LoginForm";
 import { authFetch } from "@/app/utils/authFetch";
 
@@ -25,7 +24,6 @@ export default function SettingsPage() {
 
     const { toast } = useToast();
     const { theme, setTheme } = useTheme();
-    const fetchWithAuth = useApiErrorHandler();
 
     useEffect(() => {
         setMounted(true);
@@ -42,7 +40,7 @@ export default function SettingsPage() {
 
         (async () => {
             try {
-                const response = await fetchWithAuth(`/api/users/${userId}`, {
+                const response = await authFetch(`/api/users/${userId}`, {
                     method: "GET",
                     headers: {
                         auth_token: `${localStorage.getItem("auth_token")}`,
@@ -67,13 +65,13 @@ export default function SettingsPage() {
                 });
             }
         })();
-    }, [userId, fetchWithAuth, toast, hasFetchedUser]);
+    }, [userId, authFetch, toast, hasFetchedUser]);
 
     const handleEmailChange = useCallback(
         async (checked: boolean) => {
             if (!userId) return;
             try {
-                const res = await fetchWithAuth(`/api/users/${userId}/email-notification`, {
+                const res = await authFetch(`/api/users/${userId}/email-notification`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -88,7 +86,7 @@ export default function SettingsPage() {
                 toast({ title: "Erreur", description: "Échec de la mise à jour.", variant: "destructive" });
             }
         },
-        [userId, fetchWithAuth, toast]
+        [userId, authFetch, toast]
     );
 
     const handleDarkChange = useCallback((checked: boolean) => {
@@ -112,7 +110,7 @@ export default function SettingsPage() {
     const handleLogoutAll = useCallback(async () => {
         if (!userId) return;
         try {
-            const res = await fetchWithAuth(`/api/logout/${userId}`, {
+            const res = await authFetch(`/api/logout/${userId}`, {
                 method: "POST",
                 headers: {
                     auth_token: `${localStorage.getItem("auth_token")}`,
@@ -123,7 +121,7 @@ export default function SettingsPage() {
         } catch {
             toast({ title: "Erreur", description: "Échec de la déconnexion.", variant: "destructive" });
         }
-    }, [userId, fetchWithAuth, toast]);
+    }, [userId, authFetch, toast]);
 
     const handleSaveProfile = async () => {
         if (!userId) return;

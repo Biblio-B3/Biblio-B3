@@ -3,7 +3,7 @@ import "./globals.css"
 import ThemeProvider from "./components/ThemeProvider"
 import AuthWrapper from "./components/AuthWrapper"
 import { LibraryProvider } from "./components/LibraryContext"
-import { DisconnectAfterRevocationWrapper } from "./components/DisconnectAfterRevocation"
+import { TokenChecker } from "./components/TokenChecker"
 import type React from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -22,11 +22,11 @@ export default function RootLayout({
                     enableSystem={false}
                     storageKey="librario-theme"
                 >
-                    <DisconnectAfterRevocationWrapper>
+                    <TokenChecker>
                         <LibraryProvider>
                             <AuthWrapper>{children}</AuthWrapper>
                         </LibraryProvider>
-                    </DisconnectAfterRevocationWrapper>
+                    </TokenChecker>
                 </ThemeProvider>
             </body>
         </html>

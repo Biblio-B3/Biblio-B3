@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Book, Pagination } from "./types";
 import { Plus, Archive } from "lucide-react";
 import { AddBookDialog } from "./AddBookDialog";
-import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
+import { authFetch } from "@/app/utils/authFetch";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "./SearchBar";
