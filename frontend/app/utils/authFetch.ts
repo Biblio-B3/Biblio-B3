@@ -98,15 +98,6 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
     throw new Error("Session expirée");
   }
 
-  // Vérifier les erreurs spécifiques dans la réponse
-  if (!response.ok) {
-    try {
-      const error = await response.clone().json();
-      handleApiError(error);
-    } catch (parseError) {
-      // Si on ne peut pas parser la réponse, on continue normalement
-    }
-  }
 
   return response;
 };
@@ -167,15 +158,6 @@ export const useAuthFetch = () => {
       throw new Error("Session expirée");
     }
 
-    // Vérifier les erreurs spécifiques dans la réponse
-    if (!response.ok) {
-      try {
-        const error = await response.clone().json();
-        handleApiErrorWithRouter(error, router);
-      } catch (parseError) {
-        // Si on ne peut pas parser la réponse, on continue normalement
-      }
-    }
 
     return response;
   };
