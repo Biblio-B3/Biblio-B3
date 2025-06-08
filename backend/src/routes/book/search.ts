@@ -86,10 +86,8 @@ app.get(
             }
 
             if (isRemovedParam === "true") {
-                console.log("Filtering for removed books only");
                 filterConditions.push(eq(books.is_removed, true));
             } else if (isRemovedParam === "false" || isRemovedParam === undefined) {
-                console.log("Filtering out removed books");
                 filterConditions.push(eq(books.is_removed, false));
             }
 
