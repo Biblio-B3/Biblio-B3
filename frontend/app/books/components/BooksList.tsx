@@ -36,7 +36,7 @@ export const BooksList = () => {
     setIsAuthenticated(!!token);
 
     // Restaurer l'état sauvegardé au retour des détails ou au refresh
-    const savedState = localStorage.getItem("booksListState");
+    const savedState = sessionStorage.getItem("booksListState");
     
     if (savedState) {
       try {
@@ -49,11 +49,9 @@ export const BooksList = () => {
         
         // Marquer qu'on doit restaurer le scroll une fois les livres chargés
         setPendingScrollRestore(scrollPosition);
-        
-        // Nettoyer l'état sauvegardé
-        localStorage.removeItem("booksListState");
       } catch (error) {
         console.error("Erreur lors de la restauration de l'état:", error);
+        sessionStorage.removeItem("booksListState");
       }
     }
     
@@ -74,7 +72,7 @@ export const BooksList = () => {
     }
   }, [searchTerm, showArchivedOnly]);
 
-  // Sauvegarder l'état avant de naviguer vers les détails
+  // Sauvegarder l'état en continu
   const saveCurrentState = () => {
     if (!isClient) return;
     
@@ -88,8 +86,39 @@ export const BooksList = () => {
       searchTerm,
       showArchived: showArchivedOnly
     };
-    localStorage.setItem("booksListState", JSON.stringify(state));
+    sessionStorage.setItem("booksListState", JSON.stringify(state));
   };
+
+  // Sauvegarder l'état automatiquement quand il change
+  useEffect(() => {
+    if (isInitialized) {
+      saveCurrentState();
+    }
+  }, [currentPage, searchTerm, showArchivedOnly, isInitialized]);
+
+  // Sauvegarder la position de scroll périodiquement
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const saveScrollPosition = () => {
+      const mainElement = document.querySelector('main');
+      const scrollPosition = mainElement?.scrollTop || 0;
+      
+      const existingState = sessionStorage.getItem("booksListState");
+      if (existingState) {
+        try {
+          const state = JSON.parse(existingState);
+          state.scrollPosition = scrollPosition;
+          sessionStorage.setItem("booksListState", JSON.stringify(state));
+        } catch (error) {
+          console.error("Erreur lors de la sauvegarde du scroll:", error);
+        }
+      }
+    };
+
+    const interval = setInterval(saveScrollPosition, 1000); // Sauvegarder toutes les secondes
+    return () => clearInterval(interval);
+  }, [isInitialized]);
 
   const fetchBooks = async () => {
     const isSearching = debouncedSearchTerm.trim().length > 0;
@@ -134,10 +163,8 @@ export const BooksList = () => {
     if (!searchParams.get("bookId") && isInitialized) {
       fetchBooks();
       
-      // Vérifier si on a un état sauvegardé (retour des détails ou refresh)
-      const hasSavedState = localStorage.getItem("booksListState");
-      
-      if (!hasSavedState) {
+      // Vérifier si on doit restaurer le scroll (pas de scroll automatique si on restaure)
+      if (pendingScrollRestore === null) {
         const mainElement = document.querySelector('main');
         if (mainElement) {
           mainElement.scrollTop = 0;
@@ -154,6 +181,29 @@ export const BooksList = () => {
   return (
     <>
       <div className="container mx-auto py-6">
+        {/* Navigation en haut si page > 1 */}
+        {pagination && pagination.totalPages > 1 && currentPage > 1 && (
+          <div className="flex justify-center items-center mb-6 gap-4">
+            <Button
+              variant="outline"
+              disabled={!pagination.hasPreviousPage}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              Précédent
+            </Button>
+            <span>
+              Page {pagination.page} sur {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={!pagination.hasNextPage}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
+              Suivant
+            </Button>
+          </div>
+        )}
+
         <div className="flex justify-between mb-4">
           <SearchBar onSearch={setSearchTerm} />
           <div className="flex gap-2">
