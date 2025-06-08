@@ -6,17 +6,25 @@ import { useRouter } from "next/navigation";
 
 type BookCardProps = {
   book: Book;
+  onNavigate?: () => void;
 };
 
-export const BookCard = ({ book }: BookCardProps) => {
+export const BookCard = ({ book, onNavigate }: BookCardProps) => {
   const router = useRouter();
+
+  const handleClick = () => {
+    // Sauvegarder l'état avant de naviguer
+    if (onNavigate) {
+      onNavigate();
+    }
+    // Naviguer vers les détails du livre
+    router.push(`/books?bookId=${book.id}`);
+  };
 
   return (
     <div
       className="w-48 bg-card text-card-foreground rounded-lg shadow-md overflow-hidden cursor-pointer"
-      onClick={() => {
-        router.push(`/books?bookId=${book.id}`);
-      }}
+      onClick={handleClick}
     >
       <div className="relative w-full h-60">
         <Image

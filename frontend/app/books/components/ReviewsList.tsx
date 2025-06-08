@@ -27,8 +27,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
   }, [pagination, currentPage]);
 
   useEffect(() => {
-    console.log("Fetching reviews for", bookId, "page", currentPage);
-
     if (!bookId) return;
 
     let isMounted = true;
@@ -43,11 +41,9 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
         const response = await authFetch(
           `/api/books/${bookId}/reviews?page=${currentPage}&itemsPerPage=${itemsPerPage}`
         );
-        console.log("Response review data:", response);
         if (!isMounted) return;
 
         if (response.status === 404) {
-          console.log("404 detected - no reviews found");
           setReviews([]);
           setPagination({
             page: 1,
@@ -82,8 +78,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
           setLoading(false);
         }
       } catch (err: any) {
-        console.log("Caught error:", err);
-        
         if (isMounted) {
           setError("Erreur lors de la récupération des avis");
           setLoading(false);
@@ -127,14 +121,11 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
     }
   };
 
-  console.log("Current state:", { reviews: reviews.length, error, loading, pagination });
-
   if (loading) {
     return <div className="text-center py-4">Chargement des avis...</div>;
   }
 
   if (error) {
-    console.log("Showing error:", error);
     return <div className="text-center py-4 text-red-500">{error}</div>;
   }
 

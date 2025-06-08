@@ -123,7 +123,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
       if (response.ok) {
         setDeleteDialogOpen(false);
-        router.push("/books");
+        router.back();
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Erreur lors de la suppression du livre");
@@ -146,7 +146,6 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       });
 
       if (response.ok) {
-        // Update the book state locally to reflect the change
         setBook(prev => prev ? { ...prev, is_removed: !prev.is_removed } : null);
       } else {
         const errorData = await response.json();
@@ -192,7 +191,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       <Button
         variant="ghost"
         className="mb-4 flex items-center"
-        onClick={() => router.push("/books")}
+        onClick={() => router.back()}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Retour aux livres
       </Button>

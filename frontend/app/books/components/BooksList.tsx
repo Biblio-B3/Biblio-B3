@@ -10,7 +10,7 @@ import { authFetch } from "@/app/utils/authFetch";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "./SearchBar";
-import { useUserRole } from "@/app/hooks/useUserRole"; // ✅ import du hook
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 export const BooksList = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -21,10 +21,44 @@ export const BooksList = () => {
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showArchivedOnly, setShowArchivedOnly] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [pendingScrollRestore, setPendingScrollRestore] = useState<number | null>(null);
   const searchParams = useSearchParams();
   const role = useUserRole();
 
   const itemsPerPage = 30;
+
+  // Initialisation
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const token = getLocalStorageItem("auth_token");
+    setIsAuthenticated(!!token);
+
+    // Restaurer l'état sauvegardé au retour des détails ou au refresh
+    const savedState = localStorage.getItem("booksListState");
+    
+    if (savedState) {
+      try {
+        const { page, scrollPosition, searchTerm: savedSearchTerm, showArchived } = JSON.parse(savedState);
+        
+        setCurrentPage(page);
+        setSearchTerm(savedSearchTerm);
+        setDebouncedSearchTerm(savedSearchTerm);
+        setShowArchivedOnly(showArchived);
+        
+        // Marquer qu'on doit restaurer le scroll une fois les livres chargés
+        setPendingScrollRestore(scrollPosition);
+        
+        // Nettoyer l'état sauvegardé
+        localStorage.removeItem("booksListState");
+      } catch (error) {
+        console.error("Erreur lors de la restauration de l'état:", error);
+      }
+    }
+    
+    setIsInitialized(true);
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -35,15 +69,27 @@ export const BooksList = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    setCurrentPage(1);
+    if (isInitialized) {
+      setCurrentPage(1);
+    }
   }, [searchTerm, showArchivedOnly]);
 
-  useEffect(() => {
+  // Sauvegarder l'état avant de naviguer vers les détails
+  const saveCurrentState = () => {
     if (!isClient) return;
     
-    const token = getLocalStorageItem("auth_token");
-    setIsAuthenticated(!!token);
-  }, []);
+    // Le scroll se fait sur l'élément main
+    const mainElement = document.querySelector('main');
+    const scrollPosition = mainElement?.scrollTop || 0;
+    
+    const state = {
+      page: currentPage,
+      scrollPosition,
+      searchTerm,
+      showArchived: showArchivedOnly
+    };
+    localStorage.setItem("booksListState", JSON.stringify(state));
+  };
 
   const fetchBooks = async () => {
     const isSearching = debouncedSearchTerm.trim().length > 0;
@@ -54,12 +100,8 @@ export const BooksList = () => {
     
     const url = showArchivedOnly ? `${baseUrl}&is_removed=true` : baseUrl;
 
-    console.log("📡 URL appelée depuis le frontend :", url);
-
     try {
-      // Utiliser authFetch pour les requêtes GET (pas besoin d'authentification)
       const response = await fetch(url);
-
       const data = await response.json();
 
       if (response.ok) {
@@ -77,12 +119,35 @@ export const BooksList = () => {
     }
   };
 
+  // Restaurer le scroll une fois que les livres sont affichés
   useEffect(() => {
-    if (!searchParams.get("bookId")) {
-      fetchBooks();
-      document.body.scrollTo({ top: 0, behavior: "smooth" });
+    if (books.length > 0 && pendingScrollRestore !== null) {
+      const mainElement = document.querySelector('main');
+      if (mainElement) {
+        mainElement.scrollTop = pendingScrollRestore;
+      }
+      setPendingScrollRestore(null);
     }
-  }, [debouncedSearchTerm, currentPage, showArchivedOnly]);
+  }, [books, pendingScrollRestore]);
+
+  useEffect(() => {
+    if (!searchParams.get("bookId") && isInitialized) {
+      fetchBooks();
+      
+      // Vérifier si on a un état sauvegardé (retour des détails ou refresh)
+      const hasSavedState = localStorage.getItem("booksListState");
+      
+      if (!hasSavedState) {
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+          mainElement.scrollTop = 0;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+    }
+  }, [debouncedSearchTerm, currentPage, showArchivedOnly, isInitialized]);
 
   if (searchParams.get("bookId")) return null;
 
@@ -112,7 +177,7 @@ export const BooksList = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {books.length > 0 ? (
-            books.map((book) => <BookCard key={book.id} book={book} />)
+            books.map((book) => <BookCard key={book.id} book={book} onNavigate={saveCurrentState} />)
           ) : (
             <p className="col-span-full text-center text-gray-500">Aucun livre trouvé.</p>
           )}
