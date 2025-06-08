@@ -92,9 +92,12 @@ export default function UserHistoryClient({ userId }: Props) {
 
     if (noHistory) {
         return (
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Pas d'historique pour cet utilisateur</h2>
-                <p>Cet utilisateur n'a pas encore consulté de livre.</p>
+            <div className="space-y-4 text-center py-8">
+                <h2 className="text-2xl font-bold text-gray-500">Aucun historique de lecture</h2>
+                <p className="text-gray-500">
+                    Cet utilisateur n'a pas encore d'historique de lecture.
+                    Les livres consultés apparaîtront ici une fois qu'il aura commencé à lire.
+                </p>
             </div>
         );
     }
