@@ -44,6 +44,7 @@ async function startServer() {
         await import("./routes/reservation/index");
         await import("./routes/review/index");
         await import("./routes/library/index");
+        await import("./routes/stats/index");
 
         app.use((req, res) => {
             res.status(404).json({
