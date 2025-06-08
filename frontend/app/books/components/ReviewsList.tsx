@@ -62,7 +62,6 @@ export const ReviewsList = ({ bookId }: ReviewsListProps) => {
           return;
         }
 
-        // Vérifier si la réponse est OK
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
