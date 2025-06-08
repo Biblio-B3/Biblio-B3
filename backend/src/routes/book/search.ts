@@ -23,7 +23,6 @@ app.get(
     "/books/search",
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            console.log("Received search request with query:", req.query);
             const page = req.query.page
                 ? parseInt(req.query.page as string)
                 : 1;
@@ -33,7 +32,7 @@ app.get(
 
             const offset = (page - 1) * itemsPerPage;
 
-            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+            const isRemovedParam = req.query.is_removed as string;
 
             const filters: BookFilterParams = {
                 title: req.query.title as string,
@@ -86,17 +85,16 @@ app.get(
                 filterConditions.push(lte(books.publish_date, filters.endDate));
             }
 
-            console.log("includeRemoved:", includeRemoved);
-            if (!includeRemoved) {
+            if (isRemovedParam === "true") {
+                console.log("Filtering for removed books only");
+                filterConditions.push(eq(books.is_removed, true));
+            } else if (isRemovedParam === "false" || isRemovedParam === undefined) {
                 console.log("Filtering out removed books");
                 filterConditions.push(eq(books.is_removed, false));
             }
 
             const whereCondition = and(...filterConditions);
             
-            console.log("Filter conditions:", filterConditions);
-            console.log("Where condition:", whereCondition);
-
             let orderByClause;
 
             if (filters.sortBy === "title") {
@@ -128,7 +126,6 @@ app.get(
                 orderByClause = asc(books.title);
             }
 
-            console.log("About to execute search query...");
             const searchResults = await db
                 .select()
                 .from(books)
@@ -137,8 +134,6 @@ app.get(
                 .limit(itemsPerPage)
                 .offset(offset);
             
-            console.log("Raw search results count:", searchResults.length);
-
             const countQuery = db
                 .select({ count: sql`COUNT(*)`.mapWith(Number) })
                 .from(books)
@@ -147,8 +142,6 @@ app.get(
             const [countResult] = await countQuery;
             const totalCount = countResult?.count || 0;
             const totalPages = Math.ceil(totalCount / itemsPerPage);
-
-            console.log("Search results:", searchResults);
 
             res.status(200).json({
                 data: searchResults,
