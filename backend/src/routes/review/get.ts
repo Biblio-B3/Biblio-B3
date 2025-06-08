@@ -31,9 +31,13 @@ app.get(
                 .innerJoin(users, eq(users.id, review.user_id))
                 .innerJoin(books, eq(books.id, review.book_id));
 
-            if (allReviews.length === 0)
-                throw new AppError("No reviews found.", 404);
-
+            if (allReviews.length === 0) {
+                res.status(404).json({
+                    message: "No reviews found.",
+                });
+                return;
+            }
+            
             res.status(200).json(allReviews);
         } catch (error) {
             if (error instanceof AppError) return next(error);
