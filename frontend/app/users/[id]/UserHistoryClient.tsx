@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { authFetch } from "@/app/utils/authFetch";
 
 type UserHistory = {
     id: number;
@@ -43,12 +44,7 @@ export default function UserHistoryClient({ userId }: Props) {
         const fetchUserHistory = async () => {
             try {
                 // On utilise ici fetch DIRECTEMENT pour pouvoir inspecter status = 404
-                const response = await fetch(`/api/users/${userId}/historical`, {
-                    method: "GET",
-                    headers: {
-                        auth_token: `${localStorage.getItem("auth_token")}`,
-                    },
-                });
+                const response = await authFetch(`/api/users/${userId}/historical`);
 
                 if (response.status === 404) {
                     // Pas d'historique pour cet utilisateur

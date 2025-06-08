@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { authFetch } from "@/app/utils/authFetch";
 
 interface DayHours {
   open: string;
@@ -55,13 +56,7 @@ export default function ProfileClient() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/library", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { auth_token: token } : {}),
-          },
-        });
+        const res = await authFetch("/api/library");
         if (!res.ok) throw new Error();
         const data = await res.json();
         setName(data.name || "");
@@ -140,12 +135,8 @@ export default function ProfileClient() {
 
     try {
       const body = { name, email, location, phone, openingHours: convertHoursForSubmit(openingHours) };
-      const res = await fetch("/api/library", {
+      const res = await authFetch("/api/library", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { auth_token: token } : {}),
-        },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();

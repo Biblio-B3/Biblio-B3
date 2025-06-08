@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
+import { authFetch } from "@/app/utils/authFetch";
 
 type User = {
   id: number;
@@ -27,12 +28,7 @@ export default function UsersClient() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/users", {
-          method: "GET",
-          headers: {
-            "auth_token": `${localStorage.getItem("auth_token")}`,
-          },
-        });
+        const response = await authFetch("/api/users");
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -59,11 +55,8 @@ export default function UsersClient() {
 
   const handleDeleteUser = async (id: number) => {
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      const response = await authFetch(`/api/users/${id}`, {
         method: "DELETE",
-        headers: {
-          "auth_token": `${localStorage.getItem("auth_token")}`,
-        },
       });
 
       if (!response.ok) {

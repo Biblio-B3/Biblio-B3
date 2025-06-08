@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetch } from "@/app/utils/authFetch";
 
 type Review = {
   id: number;
@@ -42,12 +43,7 @@ export default function ReviewsClient() {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch("/api/reviews", {
-          method: "GET",
-          headers: {
-            auth_token: `${localStorage.getItem("auth_token")}`,
-          },
-        });
+        const response = await authFetch("/api/reviews");
         if (!response.ok) {
           if (response.status === 404) {
             setError(null); // Clear any previous errors
@@ -68,11 +64,8 @@ export default function ReviewsClient() {
 
   const handleDeleteReview = async (id: number) => {
     try {
-      const response = await fetch(`/api/reviews/${id}`, {
+      const response = await authFetch(`/api/reviews/${id}`, {
         method: "DELETE",
-        headers: {
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
       });
 
       if (!response.ok)

@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getLocalStorageItem } from "@/app/utils/isClient";
 import { useApiErrorHandler } from "../components/DisconnectAfterRevocation";
 import { CheckUserId } from "@/app/login/LoginForm";
+import { authFetch } from "@/app/utils/authFetch";
 
 export default function SettingsPage() {
     const [emailNotifications, setEmailNotifications] = useState(false);
@@ -97,12 +98,8 @@ export default function SettingsPage() {
     const handleResetPassword = useCallback(async () => {
         if (!userId) return;
         try {
-            const res = await fetch(`/api/users/${userId}`, {
+            const res = await authFetch(`/api/users/${userId}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    auth_token: `${localStorage.getItem("auth_token")}`,
-                },
                 body: JSON.stringify({ resetPassword: true }),
             });
             if (!res.ok) throw new Error();
@@ -131,12 +128,8 @@ export default function SettingsPage() {
     const handleSaveProfile = async () => {
         if (!userId) return;
         try {
-            const res = await fetch(`/api/users/${userId}`, {
+            const res = await authFetch(`/api/users/${userId}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    auth_token: `${localStorage.getItem("auth_token")}`,
-                },
                 body: JSON.stringify({ email, bio, first_name: firstName, last_name: lastName }),
             });
             if (!res.ok) throw new Error();

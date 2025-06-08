@@ -23,6 +23,7 @@ import { useApiErrorHandler } from "@/app/components/DisconnectAfterRevocation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { jwtDecode } from "jwt-decode";
+import { authFetch } from "@/app/utils/authFetch";
 
 // ----- Types -----
 // Historique du user (le back doit renvoyer un tableau de ceci)
@@ -100,11 +101,8 @@ export default function UserHistoryClient() {
 
             try {
                 // 1) Récupérer l'historique de lecture AVEC fetch direct
-                const resHist = await fetch(`/api/users/${userId}/historical`, {
+                const resHist = await authFetch(`/api/users/${userId}/historical`, {
                     method: "GET",
-                    headers: {
-                        auth_token: `${localStorage.getItem("auth_token")}`,
-                    },
                 });
 
                 if (resHist.status === 404) {
@@ -124,12 +122,7 @@ export default function UserHistoryClient() {
                 setHistory(dataHist);
 
                 // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>) via fetchWithAuth
-                const resRev = await fetchWithAuth(`/api/reviews?user_id=${userId}`, {
-                    method: "GET",
-                    headers: {
-                        auth_token: `${localStorage.getItem("auth_token")}`,
-                    },
-                });
+                const resRev = await authFetch(`/api/reviews?user_id=${userId}`);
 
                 if (!resRev.ok) {
                     throw new Error("Erreur lors de la récupération des reviews");

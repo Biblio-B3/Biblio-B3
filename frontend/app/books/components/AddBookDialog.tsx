@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/app/hooks/useUserRole";
+import { authFetch } from "@/app/utils/authFetch";
 
 type AddBookDialogProps = {
   isOpen: boolean;
@@ -35,12 +36,8 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     const payload = { isbn, quantity, state: "new", copies: copyStates };
 
     try {
-      const response = await fetch("/api/books/import", {
+      const response = await authFetch("/api/books/import", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Erreur lors de l'import via ISBN");
@@ -72,12 +69,8 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     };
 
     try {
-      const response = await fetch("/api/books/manual", {
+      const response = await authFetch("/api/books/manual", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          auth_token: `${localStorage.getItem("auth_token")}`,
-        },
         body: JSON.stringify(bookData),
       });
       if (!response.ok) throw new Error("Erreur lors de l'import manuel");
