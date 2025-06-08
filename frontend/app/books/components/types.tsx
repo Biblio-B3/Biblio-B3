@@ -13,6 +13,7 @@ export type Book = {
   pageCount: number;
   publish_date: string;
   image_link: string | null;
+  is_removed: boolean;
 };
 
 export type Copy = {

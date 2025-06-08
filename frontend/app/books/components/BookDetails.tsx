@@ -47,6 +47,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
   const [numberOfCopies, setNumberOfCopies] = useState("");
   const [copyState, setCopyState] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleAddCopies = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,6 +122,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       });
 
       if (response.ok) {
+        setDeleteDialogOpen(false);
         router.push("/books");
       } else {
         const errorData = await response.json();
@@ -134,7 +136,8 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
   const handleArchiveBook = async () => {
     try {
-      const response = await authFetch(`/api/books/${bookId}/archiving`, {
+      const endpoint = book?.is_removed ? 'unarchiving' : 'archiving';
+      const response = await authFetch(`/api/books/${bookId}/${endpoint}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -143,13 +146,15 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
       });
 
       if (response.ok) {
-        router.push("/books");
+        // Update the book state locally to reflect the change
+        setBook(prev => prev ? { ...prev, is_removed: !prev.is_removed } : null);
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Erreur lors de l'archivage du livre");
+        const action = book?.is_removed ? "désarchivage" : "archivage";
+        setError(errorData.message || `Erreur lors du ${action} du livre`);
       }
     } catch (error) {
-      console.error("Error archiving book:", error);
+      console.error("Error archiving/unarchiving book:", error);
       setError("Erreur lors de la connexion au serveur");
     }
   };
@@ -211,24 +216,48 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
           <div className="flex justify-between items-start mb-2">
             <h1 className="text-2xl font-bold">{book.title}</h1>
             {userRole === "admin" && (
-              <>
+              <div className="flex gap-2">
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Supprimer le livre
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Confirmer la suppression</DialogTitle>
+                      <DialogDescription>
+                        Êtes-vous sûr de vouloir supprimer définitivement ce livre ?
+                        Cette action est irréversible et supprimera également tous les exemplaires et avis associés.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                          Annuler
+                        </Button>
+                      </DialogClose>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={handleDeleteBook}
+                      >
+                        Supprimer définitivement
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteBook}
-                  className="ml-2"
-                >
-                  Supprimer le livre
-                </Button>
-                <Button
-                  variant="destructive"
+                  variant={book.is_removed ? "default" : "destructive"}
                   size="sm"
                   onClick={handleArchiveBook}
-                  className="ml-2"
                 >
-                  Archiver le livre
+                  {book.is_removed ? "Désarchiver le livre" : "Archiver le livre"}
                 </Button>
-              </>
+              </div>
             )}
           </div>
           <p className="text-lg text-muted-foreground mb-4">par {book.author}</p>
