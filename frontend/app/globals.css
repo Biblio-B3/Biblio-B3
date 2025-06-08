@@ -74,14 +74,26 @@
     @apply border-border;
   }
   
-  body {
-    @apply bg-background text-foreground;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-  
   html {
     /* Évite le flash de contenu non stylé */
-    background-color: hsl(var(--background));
+    background-color: hsl(0 0% 100%);
+    transition: background-color 0.2s ease;
+  }
+  
+  html.dark {
+    background-color: hsl(222.2 84% 4.9%);
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    /* Assure que le body hérite du background du html */
+    background-color: inherit;
+  }
+  
+  /* Évite les transitions pendant le chargement initial */
+  .no-transition * {
+    transition: none !important;
   }
 }
 

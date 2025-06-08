@@ -15,6 +15,32 @@ export default function RootLayout({
 }) {
     return (
         <html lang="fr" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    // Désactive les transitions pendant le chargement
+                                    document.documentElement.classList.add('no-transition');
+                                    
+                                    var theme = localStorage.getItem('librario-theme') || 'light';
+                                    if (theme === 'dark') {
+                                        document.documentElement.classList.add('dark');
+                                    } else {
+                                        document.documentElement.classList.remove('dark');
+                                    }
+                                    
+                                    // Réactive les transitions après un court délai
+                                    setTimeout(function() {
+                                        document.documentElement.classList.remove('no-transition');
+                                    }, 100);
+                                } catch (e) {}
+                            })();
+                        `,
+                    }}
+                />
+            </head>
             <body className={inter.className} suppressHydrationWarning>
                 <ThemeProvider
                     attribute="class"
