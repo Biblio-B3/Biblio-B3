@@ -26,7 +26,10 @@ app.post("/login", async (req: Request, res: Response, next: NextFunction) => {
             : false;
 
         if (!isValid) {
-            throw new AppError("Invalid credentials.", 401);
+            res.status(401).json({
+                message: "User not found or invalid credentials.",
+            });
+            return;
         }
 
         const token = await generateToken(user.id, user.roles);

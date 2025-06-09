@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useLibrary } from "../components/LibraryContext";
+import { authFetch } from "../utils/authFetch";
 
 export const CheckUserId = (token: string) => {
   try {
@@ -16,7 +16,7 @@ export const CheckUserId = (token: string) => {
     const userId = JSON.parse(decodedPayload).user_id;
     return userId;
   } catch (error) {
-    console.error("⚠️ Erreur lors de la vérification de l'ID utilisateur :", error);
+    console.error("Erreur lors de la vérification de l'ID utilisateur :", error);
     return error;
   }
 };
@@ -27,6 +27,8 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
+  const [showLoginError, setShowLoginError] = useState(false);
+  const [loginErrorType, setLoginErrorType] = useState("");
   const router = useRouter();
   const { toast } = useToast();
 
@@ -34,10 +36,7 @@ export default function LoginForm() {
     // Vérifier si l'utilisateur a été redirigé à cause d'un token expiré
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      console.log('URL params:', window.location.search);
-      console.log('Expired param:', urlParams.get('expired'));
       if (urlParams.get('expired') === 'true') {
-        console.log('Setting expired message to true');
         setShowExpiredMessage(true);
       }
     }
@@ -47,6 +46,8 @@ export default function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setErrorMessage("");
+    setShowLoginError(false);
+    setLoginErrorType("");
 
     try {
       const response = await fetch("/api/login", {
@@ -65,20 +66,29 @@ export default function LoginForm() {
       }
 
       if (!response.ok) {
-        throw new Error(data.message || `Erreur ${response.status}: ${response.statusText}`);
+        // Mapper les codes d'erreur aux types d'erreur
+        let errorType = "";
+        switch (response.status) {
+          case 400:
+            errorType = "missing_fields";
+            break;
+          case 401:
+            errorType = "invalid_credentials";
+            break;
+          case 500:
+            errorType = "server_error";
+            break;
+          default:
+            errorType = "unknown_error";
+        }
+        throw new Error(errorType);
       }
 
       localStorage.setItem("auth_token", data.token);
       const id = CheckUserId(data.token);
 
       try {
-        const ResUserRole = await fetch(`/api/roles/${id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "auth_token": data.token,
-          },
-        });
+        const ResUserRole = await authFetch(`/api/roles/${id}`);
 
         let dataUserRole;
         try {
@@ -93,9 +103,8 @@ export default function LoginForm() {
           localStorage.setItem("userRole", "user");
         }
 
-        router.push("/books"); // ✅ Redirection unique vers /books
+        router.push("/books");
       } catch (error: any) {
-        console.error("⚠️ Erreur lors de la récupération du rôle :", error.message);
         setErrorMessage("Erreur lors de la récupération du rôle");
       }
 
@@ -104,12 +113,28 @@ export default function LoginForm() {
         description: "Vous êtes maintenant connecté.",
       });
     } catch (error: any) {
-      console.error("⚠️ Erreur de connexion :", error.message);
-      setErrorMessage(error.message);
+      setShowLoginError(true);
+      setLoginErrorType(error.message);
+
+      // Mapper les types d'erreur pour le toast
+      let toastDescription = "";
+      switch (error.message) {
+        case "missing_fields":
+          toastDescription = "Veuillez remplir tous les champs requis.";
+          break;
+        case "invalid_credentials":
+          toastDescription = "Email ou mot de passe incorrect.";
+          break;
+        case "server_error":
+          toastDescription = "Erreur serveur. Veuillez réessayer plus tard.";
+          break;
+        default:
+          toastDescription = "Une erreur inconnue est survenue.";
+      }
 
       toast({
         title: "Erreur de connexion",
-        description: error.message || "Une erreur inconnue est survenue.",
+        description: toastDescription,
         variant: "destructive",
       });
     } finally {
@@ -123,6 +148,18 @@ export default function LoginForm() {
         <Alert className="mb-4">
           <AlertDescription>
             Votre session a expiré. Veuillez vous reconnecter pour continuer.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {showLoginError && (
+        <Alert className="mb-4" variant="destructive">
+          <AlertDescription>
+            {loginErrorType === "missing_fields" && "Veuillez remplir tous les champs requis."}
+            {loginErrorType === "invalid_credentials" && "Email ou mot de passe incorrect. Veuillez vérifier vos informations."}
+            {loginErrorType === "server_error" && "Erreur serveur. Veuillez réessayer plus tard."}
+            {loginErrorType === "unknown_error" && "Une erreur inconnue est survenue. Veuillez réessayer."}
+            {!["missing_fields", "invalid_credentials", "server_error", "unknown_error"].includes(loginErrorType) && "Une erreur est survenue. Veuillez réessayer."}
           </AlertDescription>
         </Alert>
       )}
@@ -165,9 +202,6 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {errorMessage && (
-        <p className="text-red-500 text-sm mt-2 text-center">{errorMessage}</p>
-      )}
     </form>
   );
 }
