@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
 import { authFetch } from "@/app/utils/authFetch";
+import DeleteConfirmationDialog from "../../components/DeleteConfirmationDialog";
 
 type User = {
   id: number;
@@ -23,6 +24,9 @@ export default function UsersClient() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [navigationDisabled, setNavigationDisabled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,9 +57,11 @@ export default function UsersClient() {
     fetchUsers();
   }, []);
 
-  const handleDeleteUser = async (id: number) => {
+  const handleDeleteUser = async () => {
+    if (!currentUserId) return;
+    
     try {
-      const response = await authFetch(`/api/users/${id}`, {
+      const response = await authFetch(`/api/users/${currentUserId}`, {
         method: "DELETE",
       });
 
@@ -64,14 +70,20 @@ export default function UsersClient() {
         throw new Error(errorMessage || "Erreur lors de la suppression de l'utilisateur");
       }
 
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== currentUserId));
+      setDeleteDialogOpen(false);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erreur inconnue");
+    } finally {
+      setCurrentUserId(null);
+      setNavigationDisabled(false);
     }
   };
 
   const handleUserClick = (id: number) => {
-    router.push(`/users/${id}`);
+    if (!navigationDisabled) {
+      router.push(`/users/${id}`);
+    }
   };
 
   if (loading) return <p>Chargement des utilisateurs...</p>;
@@ -98,14 +110,27 @@ export default function UsersClient() {
         </TableHeader>
         <TableBody>
           {users.map((user) => (
-            <TableRow key={user.id} onClick={() => handleUserClick(user.id)} className="cursor-pointer">
+            <TableRow
+              key={user.id}
+              onClick={() => handleUserClick(user.id)}
+              className={`cursor-pointer ${navigationDisabled ? 'opacity-50 pointer-events-none' : ''}`}
+            >
               <TableCell>{user.first_name} {user.last_name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.roles}</TableCell>
               <TableCell>{user.bio}</TableCell>
               <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
               <TableCell>
-                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentUserId(user.id);
+                    setDeleteDialogOpen(true);
+                    setNavigationDisabled(true);
+                  }}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TableCell>
@@ -114,6 +139,23 @@ export default function UsersClient() {
         </TableBody>
       </Table>
 
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteDialogOpen(false);
+            setNavigationDisabled(false);
+          }
+        }}
+        title="Confirmer la suppression"
+        description={
+          currentUserId
+            ? `Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur ${users.find(u => u.id === currentUserId)?.first_name} ${users.find(u => u.id === currentUserId)?.last_name} ? Cette action est irréversible.`
+            : "Êtes-vous sûr de vouloir supprimer cet utilisateur ?"
+        }
+        onConfirm={handleDeleteUser}
+        isDeleting={false}
+      />
     </>
   );
 }

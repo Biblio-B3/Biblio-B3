@@ -15,6 +15,16 @@ import {
 } from "@/components/ui/table";
 import { jwtDecode } from "jwt-decode";
 import { authFetch } from "@/app/utils/authFetch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 type Reservation = {
     id: number;
@@ -33,6 +43,8 @@ export default function UserReservations() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [currentReservationId, setCurrentReservationId] = useState<number | null>(null);
 
     const getUserIdFromToken = (): number | null => {
         const token = localStorage.getItem("auth_token");
@@ -170,13 +182,48 @@ export default function UserReservations() {
                                     {reservation.is_claimed ? "Réclamée" : "Non réclamée"}
                                 </TableCell>
                                 <TableCell>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleDelete(reservation.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => {
+                                            setCurrentReservationId(reservation.id);
+                                            setDeleteDialogOpen(true);
+                                          }}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                        <DialogHeader>
+                                          <DialogTitle>Confirmer la suppression</DialogTitle>
+                                          <DialogDescription>
+                                            Êtes-vous sûr de vouloir supprimer définitivement cette réservation ?
+                                            Cette action est irréversible.
+                                          </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                          <DialogClose asChild>
+                                            <Button type="button" variant="secondary">
+                                              Annuler
+                                            </Button>
+                                          </DialogClose>
+                                          <Button
+                                            type="button"
+                                            variant="destructive"
+                                            onClick={() => {
+                                              if (currentReservationId) {
+                                                handleDelete(currentReservationId);
+                                                setDeleteDialogOpen(false);
+                                              }
+                                            }}
+                                          >
+                                            Supprimer définitivement
+                                          </Button>
+                                        </DialogFooter>
+                                      </DialogContent>
+                                    </Dialog>
                                 </TableCell>
                             </TableRow>
                         ))}

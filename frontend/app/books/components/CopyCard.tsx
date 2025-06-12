@@ -11,6 +11,16 @@ import { useUserRole } from "@/app/hooks/useUserRole";
 import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 type CopyCardProps = {
   copy: Copy;
@@ -20,6 +30,7 @@ type CopyCardProps = {
 
 export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const role = useUserRole();
   const router = useRouter();
@@ -123,13 +134,38 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
         )}
 
         {role === "admin" && onDelete && !copy.is_reserved && !copy.is_claimed && (
-          <Button
-            variant="destructive"
-            className="mt-2 w-full"
-            onClick={() => onDelete(copy.copy_id)}
-          >
-            Supprimer cette copie
-          </Button>
+          <>
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" className="mt-2 w-full">
+                  Supprimer cette copie
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirmer la suppression</DialogTitle>
+                  <DialogDescription>
+                    Êtes-vous sûr de vouloir supprimer définitivement cet exemplaire ?
+                    Cette action est irréversible.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Annuler
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => onDelete(copy.copy_id)}
+                  >
+                    Supprimer définitivement
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
         )}
 
         {!copy.is_reserved && (
