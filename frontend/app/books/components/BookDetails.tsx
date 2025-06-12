@@ -31,6 +31,7 @@ import { CopiesList } from "./CopiesList";
 import { ReviewsList } from "./ReviewsList";
 import { authFetch } from "@/app/utils/authFetch";
 import { useUserRole } from "@/app/hooks/useUserRole";
+import { EditBookDialog } from "./EditBookDialog";
 
 type BookDetailsProps = {
   bookId: string;
@@ -48,6 +49,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
   const [copyState, setCopyState] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleAddCopies = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,6 +160,10 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
     }
   };
 
+  const handleBookUpdated = (updatedBook: Book) => {
+    setBook(updatedBook);
+  };
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd-MM-yyyy", { locale: fr });
   };
@@ -216,6 +222,13 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
             <h1 className="text-2xl font-bold">{book.title}</h1>
             {userRole === "admin" && (
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditDialogOpen(true)}
+                >
+                  Modifier le livre
+                </Button>
                 <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
@@ -341,6 +354,16 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
       <CopiesList bookId={bookId} />
       <ReviewsList bookId={bookId} />
+      
+      {/* Dialog de modification du livre */}
+      {book && (
+        <EditBookDialog
+          isOpen={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          book={book}
+          onBookUpdated={handleBookUpdated}
+        />
+      )}
     </div>
   );
 };

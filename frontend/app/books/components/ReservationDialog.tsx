@@ -106,6 +106,13 @@ export const ReservationDialog = ({
       setShowDropdown(false);
       return;
     }
+    
+    // Ne pas déclencher la recherche si un utilisateur a été sélectionné
+    const selectedUser = users.find(user => user.email === searchQuery);
+    if (selectedUser && userId === selectedUser.id.toString()) {
+      return;
+    }
+    
     debounceTimeout.current = setTimeout(() => {
       const results = users.filter((user) =>
         user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -113,7 +120,7 @@ export const ReservationDialog = ({
       setFilteredUsers(results);
       setShowDropdown(results.length > 0);
     }, 500);
-  }, [searchQuery, users]);
+  }, [searchQuery, users, userId]);
 
   const handleReservationSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -187,7 +194,9 @@ export const ReservationDialog = ({
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
-                      setShowDropdown(true);
+                      if (e.target.value.trim() !== "") {
+                        setShowDropdown(true);
+                      }
                     }}
                     placeholder="Recherche par e-mail"
                     className="border rounded-md px-3 py-2 bg-black text-white"
@@ -202,6 +211,7 @@ export const ReservationDialog = ({
                             setSearchQuery(user.email);
                             setUserId(user.id.toString());
                             setShowDropdown(false);
+                            setFilteredUsers([]);
                           }}
                         >
                           {user.email}
