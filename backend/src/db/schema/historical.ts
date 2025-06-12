@@ -13,7 +13,7 @@ export const historical = pgTable("historical", {
         .references(() => books.id, { onDelete: "cascade" }),
     copy_id: integer("copy_id")
         .notNull()
-        .references(() => copy.id, { onDelete: "cascade" }),
+        .references(() => copy.id, { onDelete: "set null" }),
     user_id: integer("user_id")
         .notNull()
         .references(() => users.id, { onDelete: "cascade" }),
