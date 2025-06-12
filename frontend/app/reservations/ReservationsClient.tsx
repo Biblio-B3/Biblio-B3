@@ -103,6 +103,11 @@ export default function ReservationsClient() {
             : reservation
         )
       );
+
+      // Rafraîchir la page après un unclaim
+      if (!isClaimed) {
+        window.location.reload();
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erreur inconnue");
     }
