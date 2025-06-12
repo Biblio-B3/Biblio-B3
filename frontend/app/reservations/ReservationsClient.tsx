@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
@@ -40,7 +40,6 @@ type Reservation = {
 export default function ReservationsClient() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [error, setError] = useState<string | null>(null);
-
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -72,10 +71,8 @@ export default function ReservationsClient() {
     return format(new Date(dateString), "dd-MM-yyyy", { locale: fr });
   };
 
-  const handleClaimStatusChange = async (copyId: number, isClaimed: boolean) => {
-    const route = isClaimed
-      ? `/api/copy/${copyId}/claimed`
-      : `/api/copy/${copyId}/unclaimed`;
+  const handleClaimStatusChange = async (copyId: number) => {
+    const route = `/api/copy/${copyId}/claimed`;
 
     try {
       const response = await authFetch(route, {
@@ -91,7 +88,7 @@ export default function ReservationsClient() {
       setReservations((prevReservations) =>
         prevReservations.map((reservation) =>
           reservation.copy_id === copyId
-            ? { ...reservation, is_claimed: isClaimed }
+            ? { ...reservation, is_claimed: true }
             : reservation
         )
       );
@@ -127,8 +124,6 @@ export default function ReservationsClient() {
     switch (filter) {
       case "claimed":
         return reservation.is_claimed;
-      case "unclaimed":
-        return !reservation.is_claimed;
       case "claimedExpired":
         return reservation.is_claimed && finalDate < today;
       default:
@@ -155,7 +150,6 @@ export default function ReservationsClient() {
           <SelectContent>
             <SelectItem value="all">Toutes les réservations</SelectItem>
             <SelectItem value="claimed">Réclamées</SelectItem>
-            <SelectItem value="unclaimed">Non réclamées</SelectItem>
             <SelectItem value="claimedExpired">
               Réclamées et expirées
             </SelectItem>
@@ -195,21 +189,16 @@ export default function ReservationsClient() {
                 <TableCell>{formatDate(reservation.reservation_date)}</TableCell>
                 <TableCell>{formatDate(reservation.final_date)}</TableCell>
                 <TableCell>
-                  <Select
-                    value={reservation.is_claimed ? "claimed" : "unclaimed"}
-                    onValueChange={(value) => {
-                      const isClaimed = value === "claimed";
-                      handleClaimStatusChange(reservation.copy_id, isClaimed);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="claimed">Réclamée</SelectItem>
-                      <SelectItem value="unclaimed">Non Réclamée</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {reservation.is_claimed ? (
+                    <span className="text-green-600 font-medium">Réclamée</span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleClaimStatusChange(reservation.copy_id)}
+                    >
+                      Réclamer
+                    </Button>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Button

@@ -26,7 +26,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
 
   useEffect(() => {
     if (!isClient) return;
-    
+
     const token = getLocalStorageItem("auth_token");
     setIsAuthenticated(!!token);
   }, []);

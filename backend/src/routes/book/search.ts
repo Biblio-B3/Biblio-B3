@@ -92,7 +92,7 @@ app.get(
             }
 
             const whereCondition = and(...filterConditions);
-            
+
             let orderByClause;
 
             if (filters.sortBy === "title") {
@@ -131,7 +131,7 @@ app.get(
                 .orderBy(orderByClause)
                 .limit(itemsPerPage)
                 .offset(offset);
-            
+
             const countQuery = db
                 .select({ count: sql`COUNT(*)`.mapWith(Number) })
                 .from(books)
@@ -161,91 +161,91 @@ app.get(
     },
 );
 
-// app.get(
-//     "/books/categories",
-//     checkTokenMiddleware,
-//     async (req: Request, res: Response, next: NextFunction) => {
-//         try {
-//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+app.get(
+    "/books/categories",
+    checkTokenMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
-//             const categories = await db
-//                 .select({ category: books.category })
-//                 .from(books)
-//                 .where(whereCondition)
-//                 .groupBy(books.category)
-//                 .orderBy(asc(books.category));
+            const categories = await db
+                .select({ category: books.category })
+                .from(books)
+                .where(whereCondition)
+                .groupBy(books.category)
+                .orderBy(asc(books.category));
 
-//             const categoryList = categories.map((item) => item.category);
+            const categoryList = categories.map((item) => item.category);
 
-//             res.status(200).json(categoryList);
-//         } catch (error) {
-//             if (error instanceof AppError) return next(error);
-//             return next(
-//                 new AppError(
-//                     "Error while retrieving book categories",
-//                     500,
-//                     error,
-//                 ),
-//             );
-//         }
-//     },
-// );
+            res.status(200).json(categoryList);
+        } catch (error) {
+            if (error instanceof AppError) return next(error);
+            return next(
+                new AppError(
+                    "Error while retrieving book categories",
+                    500,
+                    error,
+                ),
+            );
+        }
+    },
+);
 
-// app.get(
-//     "/books/publishers",
-//     checkTokenMiddleware,
-//     async (req: Request, res: Response, next: NextFunction) => {
-//         try {
-//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+app.get(
+    "/books/publishers",
+    checkTokenMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
-//             const publishers = await db
-//                 .select({ publisher: books.publisher })
-//                 .from(books)
-//                 .where(whereCondition)
-//                 .groupBy(books.publisher)
-//                 .orderBy(asc(books.publisher));
+            const publishers = await db
+                .select({ publisher: books.publisher })
+                .from(books)
+                .where(whereCondition)
+                .groupBy(books.publisher)
+                .orderBy(asc(books.publisher));
 
-//             const publisherList = publishers.map((item) => item.publisher);
+            const publisherList = publishers.map((item) => item.publisher);
 
-//             res.status(200).json(publisherList);
-//         } catch (error) {
-//             if (error instanceof AppError) return next(error);
-//             return next(
-//                 new AppError(
-//                     "Error while retrieving book publishers",
-//                     500,
-//                     error,
-//                 ),
-//             );
-//         }
-//     },
-// );
+            res.status(200).json(publisherList);
+        } catch (error) {
+            if (error instanceof AppError) return next(error);
+            return next(
+                new AppError(
+                    "Error while retrieving book publishers",
+                    500,
+                    error,
+                ),
+            );
+        }
+    },
+);
 
-// app.get(
-//     "/books/authors",
-//     checkTokenMiddleware,
-//     async (req: Request, res: Response, next: NextFunction) => {
-//         try {
-//             const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-//             const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+app.get(
+    "/books/authors",
+    checkTokenMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
 
-//             const authors = await db
-//                 .select({ author: books.author })
-//                 .from(books)
-//                 .where(whereCondition)
-//                 .groupBy(books.author)
-//                 .orderBy(asc(books.author));
+            const authors = await db
+                .select({ author: books.author })
+                .from(books)
+                .where(whereCondition)
+                .groupBy(books.author)
+                .orderBy(asc(books.author));
 
-//             const authorList = authors.map((item) => item.author);
+            const authorList = authors.map((item) => item.author);
 
-//             res.status(200).json(authorList);
-//         } catch (error) {
-//             if (error instanceof AppError) return next(error);
-//             return next(
-//                 new AppError("Error while retrieving book authors", 500, error),
-//             );
-//         }
-//     },
-// );
+            res.status(200).json(authorList);
+        } catch (error) {
+            if (error instanceof AppError) return next(error);
+            return next(
+                new AppError("Error while retrieving book authors", 500, error),
+            );
+        }
+    },
+);
