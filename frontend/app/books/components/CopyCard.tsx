@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 
 type CopyCardProps = {
-  copy: Copy & { copy_id: number; /* ou le champ que vous utilisez pour l’ID */ };
+  copy: Copy & { copy_id: number; };
   onDelete?: (copyId: number) => Promise<void>;
   onUpdateCopy?: (copyId: number, newState: string) => Promise<void>;
 };
@@ -32,6 +32,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
   const [reservationDialogOpen, setReservationDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; content: string } | null>(null);
   const role = useUserRole();
   const router = useRouter();
 
@@ -63,6 +64,18 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
     router.push(`/books/copy/${copy.copy_id}/historical`);
   };
 
+  const handleDelete = async () => {
+    try {
+      if (!onDelete) return;
+      await onDelete(copy.copy_id);
+      setMessage({ type: 'success', content: "L'exemplaire a été supprimé avec succès." });
+      setTimeout(() => {
+        setDeleteDialogOpen(false);
+      }, 2000);
+    } catch (error) {
+      setMessage({ type: 'error', content: "Échec de la suppression de l'exemplaire" });
+    }
+  };
 
   return (
     <>
@@ -157,6 +170,11 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
                     Cette action est irréversible.
                   </DialogDescription>
                 </DialogHeader>
+                {message && (
+                  <div className={`${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-4 py-3 rounded-md mb-4`}>
+                    {message.content}
+                  </div>
+                )}
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">
@@ -166,7 +184,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
                   <Button
                     type="button"
                     variant="destructive"
-                    onClick={() => onDelete(copy.copy_id)}
+                    onClick={handleDelete}
                   >
                     Supprimer définitivement
                   </Button>
@@ -195,7 +213,6 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
           )
         )}
 
-        {/* NOUVEAU BOUTON HISTORIQUE */}
         <Button
           className="mt-2 w-full"
           variant="secondary"
