@@ -102,7 +102,9 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
           </div>
         </div>
 
-        <p className="text-sm mb-2">ID exemplaire: #{copy.copy_id}</p>
+        {role === "admin" && (
+          <p className="text-sm mb-2">ID exemplaire: #{copy.copy_id}</p>
+        )}
 
         {/* ✅ Affichage de la date de fin si réservé */}
         {copy.is_reserved && copy.final_date && (
