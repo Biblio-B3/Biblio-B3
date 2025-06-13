@@ -1,6 +1,7 @@
 import { and, lt, eq } from "drizzle-orm";
 import { reservation } from "../../db/schema/reservation";
 import { copy } from "../../db/schema/copy";
+import { books } from "../../db/schema/book";
 import { users } from "../../db/schema/users";
 import { db } from "../config/database";
 import { logMessage } from "../utils/logger";
@@ -18,10 +19,12 @@ export async function reservation_expiration_reminder() {
                 userId: reservation.user_id,
                 userEmail: users.email,
                 finalDate: reservation.final_date,
+                bookTitle: books.title,
             })
             .from(reservation)
             .innerJoin(copy, eq(copy.id, reservation.copy_id))
             .innerJoin(users, eq(users.id, reservation.user_id))
+            .innerJoin(books, eq(books.id, copy.book_id))
             .where(
                 and(
                     lt(reservation.final_date, oneDayBeforeExpiration),
@@ -37,7 +40,7 @@ export async function reservation_expiration_reminder() {
             for (const reservation of expiringReservations) {
                 await sendExpiringReservationReminder(
                     reservation.userId,
-                    reservation.reservationId,
+                    reservation.bookTitle,
                     reservation.finalDate,
                 );
             }
