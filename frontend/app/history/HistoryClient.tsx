@@ -13,6 +13,7 @@ import {
     Dialog,
     DialogContent,
     DialogHeader,
+    DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { jwtDecode } from "jwt-decode";
 import { authFetch } from "@/app/utils/authFetch";
+import { DeleteReviewButton } from "@/app/reviews/components/DeleteReviewButton";
 
-// ----- Types -----
-// Historique du user (le back doit renvoyer un tableau de ceci)
 interface UserHistory {
     id: number;
     date_read: string;
@@ -36,7 +36,6 @@ interface UserHistory {
     user_last_name?: string;
 }
 
-// Représentation d’une review existante
 interface UserReview {
     id: number;
     book_id: number;
@@ -44,36 +43,31 @@ interface UserReview {
     description: string;
     note: number;
     condition: number;
+    user_id: number;
 }
 
-// Payload du JWT (pour extraire user_id côté front)
 interface JwtPayload {
     user_id: number;
 }
 
-// ----- Composant principal -----
 export default function UserHistoryClient() {
     const [history, setHistory] = useState<UserHistory[]>([]);
     const [userReviews, setUserReviews] = useState<Record<number, UserReview>>({});
-    //              ^------ dictionnaire indexé par book_id → UserReview
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [noHistory, setNoHistory] = useState(false);
 
-    // Pour le dialogue de création / mise à jour
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState<UserHistory | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
 
-    // Champs du formulaire
     const [description, setDescription] = useState("");
     const [note, setNote] = useState(0);
     const [condition, setCondition] = useState(0);
 
     const [submitting, setSubmitting] = useState(false);
 
-    // Extrait user_id depuis le token
     const getUserIdFromToken = (): number | null => {
         const token = localStorage.getItem("auth_token");
         if (!token) return null;
@@ -85,65 +79,59 @@ export default function UserHistoryClient() {
         }
     };
 
-    // Au montage, on récupère :
-    //  1) l'historique (history) en utilisant fetch direct pour intercepter le 404
-    //  2) si historique existe, on récupère les reviews (userReviews)
-    useEffect(() => {
-        const fetchEverything = async () => {
-            const userId = getUserIdFromToken();
-            if (!userId) {
-                setError("Utilisateur non authentifié.");
-                setLoading(false);
+    const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        
+        const userId = getUserIdFromToken();
+        if (!userId) {
+            setError("Utilisateur non authentifié.");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const resHist = await authFetch(`/api/users/${userId}/historical`, {
+                method: "GET",
+            });
+
+            if (resHist.status === 404) {
+                setNoHistory(true);
                 return;
             }
 
-            try {
-                // 1) Récupérer l'historique de lecture AVEC fetch direct
-                const resHist = await authFetch(`/api/users/${userId}/historical`, {
-                    method: "GET",
-                });
+            if (!resHist.ok) {
+                throw new Error("Erreur lors de la récupération de l'historique");
+            }
 
-                if (resHist.status === 404) {
-                    // L'utilisateur n'a pas d'historique → on bascule en noHistory
-                    setNoHistory(true);
-                    setLoading(false);
-                    return;
-                }
+            const dataHist: UserHistory[] = await resHist.json();
+            setHistory(dataHist);
 
-                if (!resHist.ok) {
-                    // Toute autre erreur (500, 401, etc.)
-                    throw new Error("Erreur lors de la récupération de l'historique");
-                }
+            const resRev = await authFetch(`/api/users/${userId}/reviews`);
 
-                // Si OK, on parse les données
-                const dataHist: UserHistory[] = await resHist.json();
-                setHistory(dataHist);
-
-                // 2) Récupérer *toutes* les reviews du user (GET /api/reviews?user_id=<userId>) via authFetch
-                const resRev = await authFetch(`/api/reviews?user_id=${userId}`);
-
-                if (!resRev.ok) {
-                    throw new Error("Erreur lors de la récupération des reviews");
-                }
-
+            if (resRev.status === 404) {
+                setUserReviews({});
+            } else if (!resRev.ok) {
+                throw new Error(`Erreur ${resRev.status} lors de la récupération des reviews`);
+            } else {
                 const dataRev: UserReview[] = await resRev.json();
-                // On transforme en dictionnaire { [book_id]: UserReview }
                 const revDict: Record<number, UserReview> = {};
                 dataRev.forEach((rev) => {
                     revDict[rev.book_id] = rev;
                 });
                 setUserReviews(revDict);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Erreur inconnue");
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Erreur inconnue");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchEverything();
+    useEffect(() => {
+        fetchData();
     }, []);
 
-    // Formatte la date en FR (dd-MM-yyyy)
     const formatDate = (dateString: string) => {
         if (!dateString) return "Date manquante";
         const normalized = dateString.includes(" ")
@@ -159,7 +147,6 @@ export default function UserHistoryClient() {
         setError(null);
         setSelectedBook(item);
 
-        // Si l'utilisateur a déjà une review pour ce book_id, on passe en mode édition
         const existingReview = userReviews[item.book_id];
         if (existingReview) {
             setIsEditing(true);
@@ -168,7 +155,6 @@ export default function UserHistoryClient() {
             setNote(existingReview.note);
             setCondition(existingReview.condition);
         } else {
-            // nouveau review
             setIsEditing(false);
             setEditingReviewId(null);
             setDescription("");
@@ -199,7 +185,6 @@ export default function UserHistoryClient() {
                 throw new Error("Token d'authentification manquant");
             }
 
-            // Construction du payload commun
             const payload = {
                 book_id: selectedBook.book_id,
                 copy_id: selectedBook.copy_id,
@@ -210,7 +195,6 @@ export default function UserHistoryClient() {
 
             let res;
             if (isEditing && editingReviewId) {
-                // Mise à jour (PUT)
                 res = await authFetch(`/api/reviews/${editingReviewId}`, {
                     method: "PUT",
                     headers: {
@@ -220,7 +204,6 @@ export default function UserHistoryClient() {
                     body: JSON.stringify(payload),
                 });
             } else {
-                // Création (POST)
                 res = await authFetch(`/api/reviews`, {
                     method: "POST",
                     headers: {
@@ -232,18 +215,15 @@ export default function UserHistoryClient() {
             }
 
             if (res.ok) {
-                // On ferme le dialogue et on met à jour le state front
                 const jsonData = await res.json();
 
                 if (!isEditing) {
-                    // Si c'était une création, on récupère l'ID de la nouvelle review dans la réponse
                     const created: UserReview = jsonData;
                     setUserReviews((old) => ({
                         ...old,
                         [created.book_id]: created,
                     }));
                 } else {
-                    // En mise à jour, on s’attend à { updatedReview: [ { … } ] }
                     const updatedArray: UserReview[] = jsonData.updatedReview;
                     if (Array.isArray(updatedArray) && updatedArray.length > 0) {
                         const upd = updatedArray[0];
@@ -256,6 +236,7 @@ export default function UserHistoryClient() {
 
                 setDialogOpen(false);
                 setSelectedBook(null);
+                fetchData();
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(errorData.message || `Erreur ${res.status}: ${res.statusText}`);
@@ -270,7 +251,6 @@ export default function UserHistoryClient() {
     if (loading) return <p>Chargement de l'historique...</p>;
     if (error && !dialogOpen) return <p className="text-red-500">{error}</p>;
 
-    // === Cas "aucun historique" ===
     if (noHistory) {
         return (
             <div className="space-y-4">
@@ -280,12 +260,8 @@ export default function UserHistoryClient() {
         );
     }
 
-    // === Sinon, on affiche la table + le dialogue ===
     return (
         <div className="space-y-4">
-            {/* ============================
-           TABLEAU DE L’HISTORIQUE
-           ============================ */}
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -301,10 +277,17 @@ export default function UserHistoryClient() {
                             <TableRow key={item.id}>
                                 <TableCell>{item.book_title}</TableCell>
                                 <TableCell>{formatDate(item.date_read)}</TableCell>
-                                <TableCell>
+                                <TableCell className="flex gap-2">
                                     <Button size="sm" onClick={() => openReviewDialog(item)}>
                                         {alreadyReviewed ? "Modifier mon avis" : "Ajouter un avis"}
                                     </Button>
+                                    {alreadyReviewed && (
+                                        <DeleteReviewButton
+                                            reviewId={userReviews[item.book_id].id}
+                                            userId={userReviews[item.book_id].user_id}
+                                            onDeleted={fetchData}
+                                        />
+                                    )}
                                 </TableCell>
                             </TableRow>
                         );
@@ -312,12 +295,12 @@ export default function UserHistoryClient() {
                 </TableBody>
             </Table>
 
-            {/* ============================
-           DIALOGUE CREATE / UPDATE
-           ============================ */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
+                        <DialogTitle>
+                            {isEditing ? "Modifier votre avis" : "Ajouter un avis"}
+                        </DialogTitle>
                         <DialogDescription>
                             {isEditing
                                 ? "Modifiez votre review pour : "

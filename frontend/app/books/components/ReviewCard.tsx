@@ -38,6 +38,7 @@ export const ReviewCard = ({ review, onDeleted }: ReviewCardProps) => {
         </div>
         <DeleteReviewButton
           reviewId={review.id}
+          userId={review.user_id}
           onDeleted={onDeleted}
         />
       </div>
