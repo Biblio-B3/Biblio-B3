@@ -19,7 +19,7 @@ const dayLabels: Record<string, string> = {
   sunday: "Dimanche",
 };
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -87,6 +87,7 @@ export default function Sidebar() {
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
+                onClick={onNavigate}
               >
                 <item.icon className="mr-2 h-5 w-5" />
                 {item.label}

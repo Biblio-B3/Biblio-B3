@@ -50,10 +50,10 @@ export const BookCard = ({ book, onNavigate, onBookUpdated }: BookCardProps) => 
   return (
     <>
       <div
-        className="w-48 bg-card text-card-foreground rounded-lg shadow-md overflow-hidden cursor-pointer relative"
+        className="w-full xs:w-48 bg-card text-card-foreground rounded-lg shadow-md overflow-hidden cursor-pointer relative"
         onClick={handleClick}
       >
-        <div className="relative w-full aspect-[2/3]">
+        <div className="relative w-full xs:w-48 aspect-[2/3]">
           <Image
             src={
               currentBook.image_link

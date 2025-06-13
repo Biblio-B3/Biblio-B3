@@ -340,8 +340,8 @@ export const BooksList = () => {
           setIsAddBookDialogOpen={setIsAddBookDialogOpen}
         />
 
-        {/* Grille de livres */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {/* Grille de livres responsive */}
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {books.length > 0 ? (
             books.map((book) => (
               <BookCard

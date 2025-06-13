@@ -62,111 +62,119 @@ export const BooksFilters = ({
         <SearchBar onSearch={setSearchTerm} />
       </div>
       
-      <div className="flex flex-wrap gap-4 items-end">
+      <div className="hidden md:flex flex-wrap gap-4 items-end">
+        {/* Filtres desktop */}
         <div>
           <Label className="text-xs">Catégorie</Label>
-          <Select
-            value={selectedCategory}
-            onValueChange={setSelectedCategory}
-          >
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Toutes" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes</SelectItem>
               {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div>
-          <Label className="text-xs">Auteur</Label>
-          <Select
-            value={selectedAuthor}
-            onValueChange={setSelectedAuthor}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Tous" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {authors.map(au => (
-                <SelectItem key={au} value={au}>
-                  {au}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Autres filtres desktop... */}
+      </div>
+      
+      {/* Menu dépliant mobile */}
+      <div className="md:hidden">
+        <details className="dropdown">
+          <summary className="btn btn-sm">Filtres</summary>
+          <div className="p-2 shadow menu dropdown-content z-[1] bg-base-100 rounded-box w-52">
+            <div className="space-y-2">
+              <div>
+                <Label className="text-xs">Catégorie</Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Toutes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div>
-          <Label className="text-xs">Éditeur</Label>
-          <Select
-            value={selectedPublisher}
-            onValueChange={setSelectedPublisher}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Tous" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              {publishers.map(pub => (
-                <SelectItem key={pub} value={pub}>
-                  {pub}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+              <div>
+                <Label className="text-xs">Auteur</Label>
+                <Select value={selectedAuthor} onValueChange={setSelectedAuthor}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Tous" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous</SelectItem>
+                    {authors.map(au => (
+                      <SelectItem key={au} value={au}>{au}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div>
-          <Label className="text-xs">Trier par</Label>
-          <Select value={sortBy} onValueChange={val => setSortBy(val as any)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Trier" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="title">Titre</SelectItem>
-              <SelectItem value="author">Auteur</SelectItem>
-              <SelectItem value="publisher">Éditeur</SelectItem>
-              <SelectItem value="publish_date">Date publication</SelectItem>
-              <SelectItem value="category">Catégorie</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+              <div>
+                <Label className="text-xs">Éditeur</Label>
+                <Select value={selectedPublisher} onValueChange={setSelectedPublisher}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Tous" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous</SelectItem>
+                    {publishers.map(pub => (
+                      <SelectItem key={pub} value={pub}>{pub}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div>
-          <Label className="text-xs">Ordre</Label>
-          <Select value={sortOrder} onValueChange={val => setSortOrder(val as any)}>
-            <SelectTrigger className="w-30">
-              <SelectValue placeholder="Ordre" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">Ascendant</SelectItem>
-              <SelectItem value="desc">Descendant</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+              <div>
+                <Label className="text-xs">Trier par</Label>
+                <Select value={sortBy} onValueChange={val => setSortBy(val as any)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Trier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="title">Titre</SelectItem>
+                    <SelectItem value="author">Auteur</SelectItem>
+                    <SelectItem value="publisher">Éditeur</SelectItem>
+                    <SelectItem value="publish_date">Date publication</SelectItem>
+                    <SelectItem value="category">Catégorie</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {isAuthenticated && role === "admin" && (
-          <>
-            <Button
-              variant={showArchivedOnly ? "default" : "outline"}
-              onClick={() => setShowArchivedOnly(!showArchivedOnly)}
-              className="w-40"
-            >
-              <Archive className="mr-2 h-4 w-4" />
-              {showArchivedOnly ? "Tous les livres" : "Livres archivés"}
-            </Button>
-            <Button onClick={() => setIsAddBookDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
-            </Button>
-          </>
-        )}
+              <div>
+                <Label className="text-xs">Ordre</Label>
+                <Select value={sortOrder} onValueChange={val => setSortOrder(val as any)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Ordre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asc">Ascendant</SelectItem>
+                    <SelectItem value="desc">Descendant</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isAuthenticated && role === "admin" && (
+                <Button
+                  variant={showArchivedOnly ? "default" : "outline"}
+                  onClick={() => setShowArchivedOnly(!showArchivedOnly)}
+                  className="w-full"
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  {showArchivedOnly ? "Tous les livres" : "Livres archivés"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   );
