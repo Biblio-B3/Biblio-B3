@@ -4,6 +4,13 @@ import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/app/hooks/useUserRole";
@@ -51,20 +58,20 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     setImportError(null);
     setSuccessMessage(null);
     setShowAutoSwitchMessage(false);
-    
+
     const formData = new FormData(e.currentTarget);
     const rawIsbn = formData.get("isbn") as string;
-    
+
     // Nettoyer l'ISBN en supprimant les tirets, espaces et autres caractères non numériques (sauf X)
     const isbn = rawIsbn.replace(/[^0-9Xx]/g, "");
-    
+
     // Validation côté frontend avant d'envoyer la requête
     if (!isbn || isbn.trim() === "") {
       setImportError("Veuillez saisir un ISBN valide.");
       setIsLoading(false);
       return;
     }
-    
+
     // Vérifier le format ISBN (10 ou 13 chiffres, ou 9 chiffres + X pour ISBN-10)
     const isbnRegex = /^(?:\d{9}[xX]|\d{10}|\d{13})$/;
     if (!isbnRegex.test(isbn)) {
@@ -72,7 +79,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
       setIsLoading(false);
       return;
     }
-    
+
     const quantity = Number(formData.get("quantity"));
     const payload = { isbn, quantity, state: "new", copies: copyStates };
 
@@ -81,23 +88,23 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(errorData || "Erreur lors de l'import via ISBN");
       }
-      
+
       setSuccessMessage("Le livre a été importé avec succès via ISBN !");
-      
+
       // Fermer la dialog après 2 secondes pour laisser le temps de voir le message
       setTimeout(() => {
         onOpenChange(false);
         window.location.reload();
       }, 2000);
-      
+
     } catch (error) {
       let errorMessage = "Erreur inconnue";
-      
+
       if (error instanceof Error) {
         try {
           // Essayer de parser la réponse JSON du backend
@@ -112,7 +119,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
           errorMessage = error.message;
         }
       }
-      
+
       // Vérifier si c'est une erreur "Book not found on Google Books"
       if (errorMessage.includes("Book not found on Google Books") || errorMessage.includes("404")) {
         setPrefilledIsbn(rawIsbn);
@@ -128,7 +135,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
         } else if (errorMessage.includes("Error retrieving book information")) {
           errorMessage = "Erreur lors de la récupération des informations du livre.";
         }
-        
+
         setImportError(errorMessage);
       }
     } finally {
@@ -141,7 +148,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
     setIsLoading(true);
     setImportError(null);
     setSuccessMessage(null);
-    
+
     const formData = new FormData(e.currentTarget);
     const bookData = {
       title: formData.get("title") as string,
@@ -165,23 +172,23 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
         method: "POST",
         body: JSON.stringify(bookData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.text();
         throw new Error(errorData || "Erreur lors de l'import manuel");
       }
-      
+
       setSuccessMessage("Le livre a été ajouté avec succès !");
-      
+
       // Fermer la dialog après 2 secondes pour laisser le temps de voir le message
       setTimeout(() => {
         onOpenChange(false);
         window.location.reload();
       }, 2000);
-      
+
     } catch (error) {
       let errorMessage = "Erreur inconnue";
-      
+
       if (error instanceof Error) {
         try {
           // Essayer de parser la réponse JSON du backend
@@ -196,7 +203,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
           errorMessage = error.message;
         }
       }
-      
+
       // Traduire certains messages d'erreur courants
       if (errorMessage.includes("Invalid ISBN format")) {
         errorMessage = "Format d'ISBN invalide. Veuillez vérifier le numéro saisi.";
@@ -207,7 +214,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
       } else if (errorMessage.includes("Error inserting copies")) {
         errorMessage = "Erreur lors de la création des exemplaires du livre.";
       }
-      
+
       setImportError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -264,18 +271,25 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
             {copyStates.map((copyState, index) => (
               <div key={index} className="flex flex-col">
                 <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>
-                <Input
-                  id={`copyState-${index}`}
-                  name={`copyState-${index}`}
-                  type="text"
+                <Select
                   value={copyStates[index]}
-                  onChange={(e) => {
+                  onValueChange={(value) => {
                     const newStates = [...copyStates];
-                    newStates[index] = e.target.value;
+                    newStates[index] = value;
                     setCopyStates(newStates);
                   }}
-                  required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un état" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Neuf</SelectItem>
+                    <SelectItem value="good">Bon état</SelectItem>
+                    <SelectItem value="used">Usé</SelectItem>
+                    <SelectItem value="damaged">Endommagé</SelectItem>
+                    <SelectItem value="lost">Perdu</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ))}
             <div className="flex gap-2">
@@ -375,40 +389,46 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
                 {copyStates.map((copyState, index) => (
                   <div key={index} className="flex flex-col">
                     <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>
-                    <Input
-                      id={`copyState-${index}`}
-                      name={`copyState-${index}`}
-                      type="text"
+                    <Select
                       value={copyStates[index]}
-                      onChange={(e) => {
+                      onValueChange={(value) => {
                         const newStates = [...copyStates];
-                        newStates[index] = e.target.value;
+                        newStates[index] = value;
                         setCopyStates(newStates);
                       }}
-                      required
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un état" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">Neuf</SelectItem>
+                        <SelectItem value="good">Bon état</SelectItem>
+                        <SelectItem value="used">Usé</SelectItem>
+                        <SelectItem value="damaged">Endommagé</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 ))}
               </form>
             </div>
             <div className="flex gap-2 pt-4 mt-4 border-t">
-             <Button type="submit" form="manual-form" disabled={isLoading}>
-               {isLoading ? "Ajout en cours..." : "Ajouter le livre"}
-             </Button>
-             <Button
-               variant="outline"
-               onClick={() => {
-                 setImportMode("isbn");
-                 setImportError(null);
-                 setSuccessMessage(null);
-                 setShowAutoSwitchMessage(false);
-                 setPrefilledIsbn("");
-               }}
-               disabled={isLoading}
-             >
-               Retour
-             </Button>
-           </div>
+              <Button type="submit" form="manual-form" disabled={isLoading}>
+                {isLoading ? "Ajout en cours..." : "Ajouter le livre"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setImportMode("isbn");
+                  setImportError(null);
+                  setSuccessMessage(null);
+                  setShowAutoSwitchMessage(false);
+                  setPrefilledIsbn("");
+                }}
+                disabled={isLoading}
+              >
+                Retour
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>

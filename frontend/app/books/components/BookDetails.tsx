@@ -331,8 +331,9 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
                         <SelectValue placeholder="Sélectionner un état" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="available">Disponible</SelectItem>
-                        <SelectItem value="borrowed">Emprunté</SelectItem>
+                        <SelectItem value="new">Neuf</SelectItem>
+                        <SelectItem value="good">Bon état</SelectItem>
+                        <SelectItem value="used">Usé</SelectItem>
                         <SelectItem value="damaged">Endommagé</SelectItem>
                       </SelectContent>
                     </Select>
@@ -354,7 +355,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
       <CopiesList bookId={bookId} />
       <ReviewsList bookId={bookId} />
-      
+
       {/* Dialog de modification du livre */}
       {book && (
         <EditBookDialog

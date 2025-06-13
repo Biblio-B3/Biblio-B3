@@ -68,8 +68,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
     <>
       <Card className="p-4">
         <div className="flex justify-between items-start mb-3">
-          <div className="flex flex-col gap-1">
-            <Label className="text-xs font-medium">État</Label>
+          <div>
             {role === "admin" ? (
               <select
                 value={copy.state}
@@ -82,7 +81,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
                 <option value="mauvais">Mauvais</option>
               </select>
             ) : (
-              <Badge className="w-fit text-xs capitalize mt-1">
+              <Badge className="w-fit text-xs capitalize">
                 {copy.state}
               </Badge>
             )}
@@ -97,7 +96,7 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
                 Réservé
               </Badge>
             )}
-            {copy.is_claimed && (
+            {copy.is_claimed && role === 'admin' && (
               <Badge
                 variant="outline"
                 className="bg-blue-100 text-blue-800 border-blue-300"
