@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 
 type CopyCardProps = {
-  copy: Copy;
+  copy: Copy & { copy_id: number; /* ou le champ que vous utilisez pour l’ID */ };
   onDelete?: (copyId: number) => Promise<void>;
   onUpdateCopy?: (copyId: number, newState: string) => Promise<void>;
 };
@@ -26,7 +26,6 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
 
   useEffect(() => {
     if (!isClient) return;
-
     const token = getLocalStorageItem("auth_token");
     setIsAuthenticated(!!token);
   }, []);
@@ -49,6 +48,11 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
     }
   };
 
+  const handleHistorique = () => {
+    router.push(`/books/copy/${copy.copy_id}/historical`);
+  };
+
+
   return (
     <>
       <Card className="p-4">
@@ -67,7 +71,9 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
                 <option value="mauvais">Mauvais</option>
               </select>
             ) : (
-              <Badge className="w-fit text-xs capitalize mt-1">{copy.state}</Badge>
+              <Badge className="w-fit text-xs capitalize mt-1">
+                {copy.state}
+              </Badge>
             )}
           </div>
 
@@ -93,7 +99,6 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
 
         <p className="text-sm mb-2">ID exemplaire: #{copy.copy_id}</p>
 
-        {/* ✅ Affichage de la date de fin si réservé */}
         {copy.is_reserved && copy.final_date && (
           <p className="text-sm mb-2 text-muted-foreground">
             Réservé jusqu’au :{" "}
@@ -107,7 +112,9 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
 
         {copy.review_condition && copy.review_condition.length > 0 && (
           <div className="mt-3">
-            <h4 className="text-sm font-medium mb-1">Évaluations de l'état :</h4>
+            <h4 className="text-sm font-medium mb-1">
+              Évaluations de l'état :
+            </h4>
             <div className="flex flex-wrap gap-1">
               {copy.review_condition.map(
                 (condition, index) =>
@@ -150,14 +157,22 @@ export const CopyCard = ({ copy, onDelete, onUpdateCopy }: CopyCardProps) => {
             </Button>
           )
         )}
+
+        {/* NOUVEAU BOUTON HISTORIQUE */}
+        <Button
+          className="mt-2 w-full"
+          variant="secondary"
+          onClick={handleHistorique}
+        >
+          Historique
+        </Button>
       </Card>
 
       <ReservationDialog
         isOpen={reservationDialogOpen}
         onOpenChange={setReservationDialogOpen}
         copyId={copy.copy_id}
-        onSuccess={() => {
-        }}
+        onSuccess={() => { }}
       />
     </>
   );

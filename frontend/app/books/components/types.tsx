@@ -55,3 +55,14 @@ export type User = {
   first_name?: string;
   last_name?: string;
 };
+
+export type HistoricalEntry = {
+  id: number;
+  date_read: string;
+  book_id: number;
+  copy_id: number;
+  user_id: number;
+  user_first_name?: string;
+  user_last_name?: string;
+  book_title?: string;
+};
