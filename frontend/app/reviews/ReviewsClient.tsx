@@ -116,6 +116,7 @@ export default function ReviewsClient() {
                 <TableCell>
                   <DeleteReviewButton
                     reviewId={review.id}
+                    userId={review.user_id}
                     onDeleted={handleReviewDeleted}
                   />
                 </TableCell>

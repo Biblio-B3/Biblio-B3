@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useUserRole } from "@/app/hooks/useUserRole";
 import { useDeleteReview } from "../hooks/useDeleteReview";
+import { useUserId } from "../../hooks/useUserId";
 import {
   Dialog,
   DialogContent,
@@ -13,26 +14,30 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
+  DialogClose
 } from "@/components/ui/dialog";
 
 type DeleteReviewButtonProps = {
   reviewId: number;
+  userId?: number; // ID de l'auteur de la review
   onDeleted?: (reviewId: number) => void;
   className?: string;
 };
 
 export const DeleteReviewButton = ({
   reviewId,
+  userId,
   onDeleted,
   className = ""
 }: DeleteReviewButtonProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const userRole = useUserRole();
+  const currentUserId = useUserId();
   const isAdmin = userRole === "admin";
+  const isAuthor = userId !== undefined && currentUserId === userId;
   const { deleteReview, isDeleting } = useDeleteReview();
 
-  if (!isAdmin) {
+  if (!isAdmin && !isAuthor) {
     return null;
   }
 
