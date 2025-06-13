@@ -4,21 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Book, Pagination } from "./types";
-import { Plus, Archive } from "lucide-react";
 import { AddBookDialog } from "./AddBookDialog";
 import { authFetch } from "@/app/utils/authFetch";
 import { isClient, getLocalStorageItem } from "@/app/utils/isClient";
 import { useSearchParams } from "next/navigation";
-import SearchBar from "./SearchBar";
 import { useUserRole } from "@/app/hooks/useUserRole";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { BooksFilters } from "./BooksFilters";
 
 export const BooksList = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -327,116 +318,27 @@ export const BooksList = () => {
         )}
 
         {/* Barre de recherche et filtres */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <SearchBar onSearch={setSearchTerm} />
-
-          <div className="flex flex-wrap gap-2 items-end">
-            {/* Filtre catégorie */}
-            <div>
-              <Label className="text-xs">Catégorie</Label>
-              <Select
-                value={selectedCategory}
-                onValueChange={val => setSelectedCategory(val)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Toutes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Filtre auteur */}
-            <div>
-              <Label className="text-xs">Auteur</Label>
-              <Select
-                value={selectedAuthor}
-                onValueChange={val => setSelectedAuthor(val)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  {authors.map(au => (
-                    <SelectItem key={au} value={au}>
-                      {au}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Filtre éditeur */}
-            <div>
-              <Label className="text-xs">Éditeur</Label>
-              <Select
-                value={selectedPublisher}
-                onValueChange={val => setSelectedPublisher(val)}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  {publishers.map(pub => (
-                    <SelectItem key={pub} value={pub}>
-                      {pub}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Tri */}
-            <div>
-              <Label className="text-xs">Trier par</Label>
-              <Select value={sortBy} onValueChange={val => setSortBy(val as any)}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Trier" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="title">Titre</SelectItem>
-                  <SelectItem value="author">Auteur</SelectItem>
-                  <SelectItem value="publisher">Éditeur</SelectItem>
-                  <SelectItem value="publish_date">Date publication</SelectItem>
-                  <SelectItem value="category">Catégorie</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Ordre</Label>
-              <Select value={sortOrder} onValueChange={val => setSortOrder(val as any)}>
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="Ordre" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Ascendant</SelectItem>
-                  <SelectItem value="desc">Descendant</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Boutons admin */}
-            {isAuthenticated && role === "admin" && (
-              <>
-                <Button
-                  variant={showArchivedOnly ? "default" : "outline"}
-                  onClick={() => setShowArchivedOnly(prev => !prev)}
-                  className="w-40"
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  {showArchivedOnly ? "Tous les livres" : "Livres archivés"}
-                </Button>
-                <Button onClick={() => setIsAddBookDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Ajouter un livre
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
+        <BooksFilters
+          setSearchTerm={setSearchTerm}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedAuthor={selectedAuthor}
+          setSelectedAuthor={setSelectedAuthor}
+          selectedPublisher={selectedPublisher}
+          setSelectedPublisher={setSelectedPublisher}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          showArchivedOnly={showArchivedOnly}
+          setShowArchivedOnly={setShowArchivedOnly}
+          isAuthenticated={isAuthenticated}
+          role={role}
+          categories={categories}
+          authors={authors}
+          publishers={publishers}
+          setIsAddBookDialogOpen={setIsAddBookDialogOpen}
+        />
 
         {/* Grille de livres */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
