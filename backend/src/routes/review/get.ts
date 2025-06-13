@@ -65,16 +65,14 @@ app.get(
                 throw new AppError("Invalid book ID provided.", 400);
             }
 
-            // Récupérer itemsPerPage et page depuis la query, avec des valeurs par défaut
             const itemsPerPage = req.query.itemsPerPage
                 ? parseInt(req.query.itemsPerPage as string, 10)
-                : 10; // Par exemple 10 par défaut
+                : 10;
             const page = req.query.page
                 ? parseInt(req.query.page as string, 10)
                 : 1;
             const offset = (page - 1) * itemsPerPage;
 
-            // Requête paginée pour toutes les reviews de ce livre
             const paginatedReviews = await db
                 .select({
                     id: review.id,
@@ -97,7 +95,6 @@ app.get(
                 .limit(itemsPerPage)
                 .offset(offset);
 
-            // Si pas de review du tout (donc page=1 et résultat vide), on renvoie 404
             if (paginatedReviews.length === 0 && page === 1) {
                 res.status(404).json({
                     message: "No reviews found for this book.",
@@ -105,12 +102,10 @@ app.get(
                 return;
             }
 
-            // Valider chaque review dans le schema zod avec les informations utilisateur
             const validatedReviews = paginatedReviews.map((r) =>
                 selectReviewWithUserSchema.parse(r),
             );
 
-            // Calculer le nombre total de reviews pour la pagination
             const [totalCountResult] = await db
                 .select({ count: sql`COUNT(*)`.mapWith(Number) })
                 .from(review)
@@ -119,7 +114,6 @@ app.get(
             const totalCount = totalCountResult.count;
             const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-            // Si on demande une page qui n'existe pas (par exemple page > totalPages)
             if (page > totalPages && totalPages > 0) {
                 res.status(404).json({
                     message: `Page ${page} does not exist (only ${totalPages} pages).`,
@@ -127,7 +121,6 @@ app.get(
                 return;
             }
 
-            // Construire la réponse paginée
             res.status(200).json({
                 data: validatedReviews,
                 pagination: {
@@ -144,6 +137,56 @@ app.get(
             next(
                 new AppError(
                     "Internal error during review retrieval",
+                    500,
+                    error,
+                ),
+            );
+        }
+    },
+);
+
+app.get(
+    "/users/:id/reviews",
+    checkTokenMiddleware,
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = parseInt(req.params.id, 10);
+            if (isNaN(userId) || userId <= 0) {
+                throw new AppError("Invalid user ID provided.", 400);
+            }
+
+            const userReviews = await db
+                .select({
+                    id: review.id,
+                    description: review.description,
+                    note: review.note,
+                    condition: review.condition,
+                    copy_id: review.copy_id,
+                    book_id: review.book_id,
+                    user_id: review.user_id,
+                    user_first_name: users.first_name,
+                    user_last_name: users.last_name,
+                    book_title: books.title,
+                    created_at: review.created_at,
+                })
+                .from(review)
+                .innerJoin(users, eq(users.id, review.user_id))
+                .innerJoin(books, eq(books.id, review.book_id))
+                .where(eq(review.user_id, userId));
+
+            if (userReviews.length === 0) {
+                res.status(404).json({
+                    message: "No reviews found for this user.",
+                });
+                return;
+            }
+            
+            res.status(200).json(userReviews);
+        } catch (error) {
+            if (error instanceof AppError) return next(error);
+            return next(
+                new AppError(
+                    "Internal error during user reviews retrieval",
                     500,
                     error,
                 ),
