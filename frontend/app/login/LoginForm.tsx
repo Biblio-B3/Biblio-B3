@@ -160,6 +160,11 @@ export default function LoginForm() {
   };
 
   const handlePasswordChange = async () => {
+    if (!newEmail || !newPassword || !confirmPassword) {
+      setChangePasswordError("Veuillez remplir tous les champs.");
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setChangePasswordError("Les mots de passe ne correspondent pas.");
       return;
@@ -169,24 +174,36 @@ export default function LoginForm() {
     setChangePasswordError("");
 
     try {
-      const response = await authFetch("/api/change-default-credentials", {
+      const requestBody = {
+        newEmail,
+        newPassword,
+      };
+      
+      console.log("Envoi de la requête avec:", requestBody);
+      
+      const response = await fetch("/api/change-default-credentials", {
         method: "POST",
-        body: JSON.stringify({
-          newEmail,
-          newPassword,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error("Échec de la mise à jour des identifiants");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Échec de la mise à jour des identifiants");
       }
 
       toast({
         title: "Identifiants mis à jour",
-        description: "Vos identifiants ont été changés avec succès.",
+        description: "Vos identifiants ont été changés avec succès. Veuillez vous reconnecter.",
       });
       setShowPasswordChangeModal(false);
-      router.push("/books");
+      
+      // Supprimer le token et rediriger vers la page de login
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("userRole");
+      window.location.reload();
     } catch (error: any) {
       setChangePasswordError(error.message || "Une erreur est survenue");
     } finally {
