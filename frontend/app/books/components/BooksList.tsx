@@ -175,6 +175,14 @@ export const BooksList = () => {
     return () => clearInterval(interval);
   }, [isInitialized]);
 
+  const handleBookUpdated = (updatedBook: Book) => {
+    setBooks(prevBooks =>
+      prevBooks.map(book =>
+        book.id === updatedBook.id ? updatedBook : book
+      )
+    );
+  };
+
   // Charger listes de filtres (catégories, auteurs, éditeurs)
   useEffect(() => {
     const fetchFilterLists = async () => {
@@ -433,8 +441,13 @@ export const BooksList = () => {
         {/* Grille de livres */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {books.length > 0 ? (
-            books.map(book => (
-              <BookCard key={book.id} book={book} onNavigate={saveCurrentState} />
+            books.map((book) => (
+              <BookCard
+                key={book.id}
+                book={book}
+                onNavigate={saveCurrentState}
+                onBookUpdated={handleBookUpdated}
+              />
             ))
           ) : (
             <p className="col-span-full text-center text-gray-500">Aucun livre trouvé.</p>

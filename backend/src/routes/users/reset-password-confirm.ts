@@ -42,15 +42,20 @@ app.post(
                 outputType: "encoded",
             });
 
-            const [updatedUser] = await db
-                .update(users)
-                .set({ password: hashedPassword })
+            const userExists = await db
+                .select()
+                .from(users)
                 .where(eq(users.id, jwtPayload.user_id))
-                .returning();
+                .limit(1);
 
-            if (!updatedUser) {
+            if (userExists.length === 0) {
                 throw new AppError("Utilisateur non trouvé", 404);
             }
+
+            await db
+                .update(users)
+                .set({ password: hashedPassword })
+                .where(eq(users.id, jwtPayload.user_id));
 
             res.status(200).json({
                 message: "Mot de passe réinitialisé avec succès",

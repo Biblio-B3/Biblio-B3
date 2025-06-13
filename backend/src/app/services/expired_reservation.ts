@@ -17,6 +17,7 @@ export async function expired_reservation() {
                 reservationDate: reservation.reservation_date,
                 copyId: copy.id,
                 userId: reservation.user_id,
+                bookId: books.id,
                 bookTitle: books.title,
                 userEmail: users.email,
             })
@@ -36,6 +37,7 @@ export async function expired_reservation() {
                 try {
                     await sendExpiredReservationEmail(
                         reservation.userId,
+                        reservation.bookId,
                         reservation.bookTitle,
                     );
                     logMessage(

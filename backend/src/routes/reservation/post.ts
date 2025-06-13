@@ -6,9 +6,11 @@ import {
     insertReservationSchema,
 } from "../../db/schema/reservation";
 import { copy } from "../../db/schema/copy";
+import { books } from "../../db/schema/book";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../../app/utils/AppError";
+import { sendReservationConfirmation } from "../../app/services/email";
 
 app.post(
     "/reservations",
@@ -31,10 +33,6 @@ app.post(
             maxDate.setDate(today.getDate() + 28);
 
             const finalDate = new Date(req.body.final_date);
-
-            console.log(today);
-            console.log(finalDate);
-            console.log(maxDate);
 
             if (finalDate > maxDate) {
                 throw new AppError(
@@ -71,11 +69,29 @@ app.post(
                     .set({ is_reserved: true })
                     .where(eq(copy.id, validatedData.copy_id));
 
+                const [bookData] = await trx
+                    .select({ title: books.title })
+                    .from(books)
+                    .innerJoin(copy, eq(copy.book_id, books.id))
+                    .where(eq(copy.id, validatedData.copy_id))
+                    .limit(1);
+
                 res.status(201).json({
                     message:
                         "Reservation successfully added and copy marked as reserved.",
                     newReservation,
                 });
+
+                if (bookData) {
+                    const pickupDeadline = new Date(newReservation[0].reservation_date);
+                    pickupDeadline.setHours(pickupDeadline.getHours() + 48);
+                    
+                    sendReservationConfirmation(
+                        validatedData.user_id,
+                        bookData.title,
+                        pickupDeadline
+                    ).catch(console.error);
+                }
             });
         } catch (error) {
             if (

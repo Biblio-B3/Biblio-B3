@@ -21,7 +21,6 @@ export async function sendResetPasswordEmail(
         .limit(1);
 
     if (!user || user.length === 0) {
-        console.log(`User not found for reset password email: ${userId}`);
         return false;
     }
 
@@ -53,7 +52,7 @@ export async function sendResetPasswordEmail(
 
 export async function sendUnclaimedReservationReminder(
     userId: number,
-    reservationId: number,
+    bookTitle: string,
 ) {
     const user = await db
         .select()
@@ -62,9 +61,6 @@ export async function sendUnclaimedReservationReminder(
         .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(
-            `Email notification disabled for user ${userId} or user not found.`,
-        );
         return false;
     }
 
@@ -77,8 +73,11 @@ export async function sendUnclaimedReservationReminder(
         html: `
             <h1>Rappel: Réservation non récupérée</h1>
             <p>Bonjour,</p>
-            <p>Vous avez une réservation non récupérée (ID: ${reservationId}). Il vous reste 1 jour pour la récupérer.</p>
+            <p>Vous avez une réservation non récupérée pour le livre "${bookTitle}". Il vous reste 1 jour pour la récupérer.</p>
             <p>Si vous ne la récupérez pas dans les 24 heures, elle sera annulée.</p>
+            <p>Consultez vos réservations :
+                <a href="${process.env.FRONTEND_URL}/reservations-history">${process.env.FRONTEND_URL}/reservations-history</a>
+            </p>
         `,
     };
 
@@ -93,7 +92,7 @@ export async function sendUnclaimedReservationReminder(
 
 export async function sendExpiringReservationReminder(
     userId: number,
-    reservationId: number,
+    bookTitle: string,
     finalDate: Date,
 ) {
     const user = await db
@@ -103,9 +102,6 @@ export async function sendExpiringReservationReminder(
         .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(
-            `Email notification disabled for user ${userId} or user not found.`,
-        );
         return false;
     }
 
@@ -118,8 +114,11 @@ export async function sendExpiringReservationReminder(
         html: `
             <h1>Rappel: Réservation sur le point d'expirer</h1>
             <p>Bonjour,</p>
-            <p>Vous avez une réservation (ID: ${reservationId}) qui expire le ${finalDate.toLocaleDateString("fr-FR")}.</p>
+            <p>Vous avez une réservation pour le livre "${bookTitle}" qui expire le ${finalDate.toLocaleDateString("fr-FR")}.</p>
             <p>Merci de la récupérer avant cette date.</p>
+            <p>Consultez vos réservations :
+                <a href="${process.env.FRONTEND_URL}/reservations-history">${process.env.FRONTEND_URL}/reservations-history</a>
+            </p>
         `,
     };
 
@@ -140,6 +139,7 @@ import { eq } from "drizzle-orm";
 
 export async function sendExpiredReservationEmail(
     userId: number,
+    bookId: number,
     bookTitle: string,
 ) {
     const user = await db
@@ -149,9 +149,6 @@ export async function sendExpiredReservationEmail(
         .limit(1);
 
     if (!user || user.length === 0 || !user[0].email_notification) {
-        console.log(
-            `Email notification disabled for user ${userId} or user not found.`,
-        );
         return false;
     }
 
@@ -166,6 +163,9 @@ export async function sendExpiredReservationEmail(
             <p>Bonjour,</p>
             <p>Nous vous informons que votre réservation pour le livre "${bookTitle}" a expiré car elle n'a pas été récupérée à temps.</p>
             <p>Vous pouvez effectuer une nouvelle réservation si le livre est disponible.</p>
+            <p>Pour accéder à la page du livre, cliquez sur le lien :
+                <a href="${process.env.FRONTEND_URL}/books?bookId=${bookId}">${bookTitle}</a>
+            </p>
         `,
     };
 
@@ -175,6 +175,56 @@ export async function sendExpiredReservationEmail(
     } catch (error) {
         console.error(
             "Erreur lors de l'envoi de l'email de réservation expirée:",
+            error,
+        );
+        throw error;
+    }
+}
+
+export async function sendReservationConfirmation(
+    userId: number,
+    bookTitle: string,
+    pickupDeadline: Date,
+) {
+    const user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+    if (!user || user.length === 0 || !user[0].email_notification) {
+        return false;
+    }
+
+    const userEmail = user[0].email;
+
+    const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: userEmail,
+        subject: "Confirmation de votre réservation",
+        html: `
+            <h1>Confirmation de réservation</h1>
+            <p>Bonjour,</p>
+            <p>Votre réservation pour le livre "${bookTitle}" a été enregistrée avec succès.</p>
+            <p>Vous avez jusqu'au ${pickupDeadline.toLocaleString("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit"
+    })} pour récupérer votre livre (dans les 48h).</p>
+            <p>Vous pouvez consulter vos réservations à tout moment sur :
+                <a href="${process.env.FRONTEND_URL}/reservations">${process.env.FRONTEND_URL}/reservations</a>
+            </p>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return true;
+    } catch (error) {
+        console.error(
+            "Erreur lors de l'envoi de l'email de confirmation de réservation:",
             error,
         );
         throw error;
