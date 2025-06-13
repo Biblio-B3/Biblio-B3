@@ -9,6 +9,7 @@ import axios from "axios";
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../../app/utils/AppError";
 import { generateBarcodeImage } from "../../app/services/barcode";
+import { ImageEnhancementService } from "../../app/services/imageEnhancement";
 
 interface BookInfo {
     title?: string;
@@ -74,12 +75,26 @@ async function buildBook(bookInfo: BookInfo, numberOfCopies: number) {
     let bookIMG = bookInfo.imageLinks?.thumbnail || null;
     if (bookIMG !== null) {
         try {
-            let image = await axios.get(bookIMG, {
+            let imageResponse = await axios.get(bookIMG, {
                 responseType: "arraybuffer",
             });
-            bookIMG = Buffer.from(image.data).toString("base64");
+            
+            let imageBuffer = Buffer.from(imageResponse.data);
+            
+            const needsEnhancement = await ImageEnhancementService.needsEnhancement(imageBuffer);
+            
+            if (needsEnhancement) {
+                try {
+                    imageBuffer = await ImageEnhancementService.enhanceBookCoverImage(imageBuffer);
+                } catch (enhancementError) {
+                    console.error("Error enhancing image, using original:", enhancementError);
+                }
+            }
+            
+            bookIMG = imageBuffer.toString("base64");
+            
         } catch (error) {
-            console.error("Error fetching image:", error);
+            console.error("Error fetching/processing image:", error);
             bookIMG = null;
         }
     }
@@ -197,9 +212,10 @@ app.post(
             });
 
             res.status(201).json({
-                message: "Book added successfully.",
+                message: "Book added successfully with enhanced image.",
                 book: insertedBook,
                 total_copies: numberOfCopies,
+                image_enhanced: !!newBook.image_link
             });
         } catch (error) {
             if (error instanceof AppError) return next(error);
@@ -209,6 +225,7 @@ app.post(
         }
     },
 );
+
 
 app.post(
     "/books/manual",
