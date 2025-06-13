@@ -104,10 +104,6 @@ export default function ReservationsClient() {
         )
       );
 
-      // Rafraîchir la page après un unclaim
-      if (!isClaimed) {
-        window.location.reload();
-      }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Erreur inconnue");
     }
@@ -147,17 +143,9 @@ export default function ReservationsClient() {
     }
   });
 
-  if (filteredReservations.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-gray-500">Aucune réservation trouvée</p>
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Sélecteur de filtre */}
+      {/* Filter dropdown - always visible */}
       <div className="mb-4">
         <Select value={filter} onValueChange={(value) => setFilter(value)}>
           <SelectTrigger>
@@ -173,98 +161,105 @@ export default function ReservationsClient() {
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nom Utilisateur</TableHead>
-            <TableHead>Titre du Livre</TableHead>
-            <TableHead>Date de début</TableHead>
-            <TableHead>Date de fin</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredReservations.map((reservation) => {
-            const today = new Date();
-            const finalDate = new Date(reservation.final_date);
-            const isExpiredClaimed =
-              reservation.is_claimed && finalDate < today;
-            return (
-              <TableRow
-                key={reservation.id}
-                className={isExpiredClaimed ? "text-red-500" : ""}
-              >
-                <TableCell>
-                  <div>
-                    {reservation.user_first_name} {reservation.user_last_name}
-                  </div>
-                  <div className="text-sm text-gray-500">{reservation.user_email}</div>
-                </TableCell>
-                <TableCell>{reservation.book_title}</TableCell>
-                <TableCell>{formatDate(reservation.reservation_date)}</TableCell>
-                <TableCell>{formatDate(reservation.final_date)}</TableCell>
-                <TableCell>
-                  {reservation.is_claimed ? (
-                    <span className="text-green-600 font-medium">Réclamée</span>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => handleClaimStatusChange(reservation.copy_id)}
-                    >
-                      Réclamer
-                    </Button>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                    <DialogTrigger asChild>
+      {/* Conditional content */}
+      {filteredReservations.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-gray-500">Aucune réservation trouvée</p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom Utilisateur</TableHead>
+              <TableHead>Titre du Livre</TableHead>
+              <TableHead>Date de début</TableHead>
+              <TableHead>Date de fin</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredReservations.map((reservation) => {
+              const today = new Date();
+              const finalDate = new Date(reservation.final_date);
+              const isExpiredClaimed =
+                reservation.is_claimed && finalDate < today;
+              return (
+                <TableRow
+                  key={reservation.id}
+                  className={isExpiredClaimed ? "text-red-500" : ""}
+                >
+                  <TableCell>
+                    <div>
+                      {reservation.user_first_name} {reservation.user_last_name}
+                    </div>
+                    <div className="text-sm text-gray-500">{reservation.user_email}</div>
+                  </TableCell>
+                  <TableCell>{reservation.book_title}</TableCell>
+                  <TableCell>{formatDate(reservation.reservation_date)}</TableCell>
+                  <TableCell>{formatDate(reservation.final_date)}</TableCell>
+                  <TableCell>
+                    {reservation.is_claimed ? (
+                      <span className="text-green-600 font-medium">Réclamée</span>
+                    ) : (
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setCurrentReservationId(reservation.id);
-                          setDeleteDialogOpen(true);
-                        }}
+                        size="sm"
+                        onClick={() => handleClaimStatusChange(reservation.copy_id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Réclamer
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Confirmer la suppression</DialogTitle>
-                        <DialogDescription>
-                          Êtes-vous sûr de vouloir supprimer définitivement cette réservation ?
-                          Cette action est irréversible.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button type="button" variant="secondary">
-                            Annuler
-                          </Button>
-                        </DialogClose>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                      <DialogTrigger asChild>
                         <Button
-                          type="button"
-                          variant="destructive"
+                          variant="ghost"
+                          size="icon"
                           onClick={() => {
-                            if (currentReservationId) {
-                              handleDeleteReservation(currentReservationId);
-                              setDeleteDialogOpen(false);
-                            }
+                            setCurrentReservationId(reservation.id);
+                            setDeleteDialogOpen(true);
                           }}
                         >
-                          Supprimer définitivement
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Confirmer la suppression</DialogTitle>
+                          <DialogDescription>
+                            Êtes-vous sûr de vouloir supprimer définitivement cette réservation ?
+                            Cette action est irréversible.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button type="button" variant="secondary">
+                              Annuler
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => {
+                              if (currentReservationId) {
+                                handleDeleteReservation(currentReservationId);
+                                setDeleteDialogOpen(false);
+                              }
+                            }}
+                          >
+                            Supprimer définitivement
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
     </>
   );
 }
