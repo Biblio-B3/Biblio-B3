@@ -92,7 +92,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
       // Fermer la dialog après 2 secondes pour laisser le temps de voir le message
       setTimeout(() => {
         onOpenChange(false);
-        router.refresh();
+        window.location.reload();
       }, 2000);
       
     } catch (error) {
@@ -176,7 +176,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
       // Fermer la dialog après 2 secondes pour laisser le temps de voir le message
       setTimeout(() => {
         onOpenChange(false);
-        router.refresh();
+        window.location.reload();
       }, 2000);
       
     } catch (error) {
