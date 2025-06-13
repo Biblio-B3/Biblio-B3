@@ -23,7 +23,6 @@ export const review = pgTable(
             .references(() => books.id, { onDelete: "cascade" }),
         condition: integer("condition").notNull(),
         copy_id: integer("copy_id")
-            .notNull()
             .references(() => copy.id, { onDelete: "set null" }),
         user_id: integer("user_id")
             .notNull()
