@@ -54,6 +54,7 @@ app.delete(
                 deletedCopy,
             });
         } catch (error) {
+            console.error("Error deleting copy:", error);
             if (error instanceof AppError) return next(error);
             return next(
                 new AppError("Error while deleting the copy.", 500, error),
