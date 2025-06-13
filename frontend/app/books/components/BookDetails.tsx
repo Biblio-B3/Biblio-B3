@@ -204,7 +204,7 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
 
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         <div className="w-full md:w-1/4 flex-shrink-0">
-          <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
+          <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden">
             <Image
               src={
                 book.image_link
