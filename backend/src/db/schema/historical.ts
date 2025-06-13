@@ -43,4 +43,3 @@ export const updateHistoricalSchema = createInsertSchema(historical, {
     copy_id: (schema) => schema.copy_id.optional(),
     user_id: (schema) => schema.user_id.optional(),
 });
-

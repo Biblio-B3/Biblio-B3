@@ -4,7 +4,18 @@ import { books } from "../../db/schema/book";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
-import { and, eq, like, ilike, gte, lte, desc, asc, SQL, sql } from "drizzle-orm";
+import {
+    and,
+    eq,
+    like,
+    ilike,
+    gte,
+    lte,
+    desc,
+    asc,
+    SQL,
+    sql,
+} from "drizzle-orm";
 
 interface BookFilterParams {
     title?: string;
@@ -87,7 +98,10 @@ app.get(
 
             if (isRemovedParam === "true") {
                 filterConditions.push(eq(books.is_removed, true));
-            } else if (isRemovedParam === "false" || isRemovedParam === undefined) {
+            } else if (
+                isRemovedParam === "false" ||
+                isRemovedParam === undefined
+            ) {
                 filterConditions.push(eq(books.is_removed, false));
             }
 
@@ -166,8 +180,12 @@ app.get(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+            const includeRemoved =
+                req.query.is_removed === "true" ||
+                req.body?.is_removed === true;
+            const whereCondition = includeRemoved
+                ? undefined
+                : eq(books.is_removed, false);
 
             const categories = await db
                 .select({ category: books.category })
@@ -197,8 +215,12 @@ app.get(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+            const includeRemoved =
+                req.query.is_removed === "true" ||
+                req.body?.is_removed === true;
+            const whereCondition = includeRemoved
+                ? undefined
+                : eq(books.is_removed, false);
 
             const publishers = await db
                 .select({ publisher: books.publisher })
@@ -228,8 +250,12 @@ app.get(
     checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
-            const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+            const includeRemoved =
+                req.query.is_removed === "true" ||
+                req.body?.is_removed === true;
+            const whereCondition = includeRemoved
+                ? undefined
+                : eq(books.is_removed, false);
 
             const authors = await db
                 .select({ author: books.author })

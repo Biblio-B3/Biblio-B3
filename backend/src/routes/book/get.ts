@@ -13,10 +13,13 @@ app.get("/books", async (req: Request, res: Response, next: NextFunction) => {
         const page = req.query.page
             ? parseInt(req.query.page as string, 10)
             : 1;
-        const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+        const includeRemoved =
+            req.query.is_removed === "true" || req.body?.is_removed === true;
         const offset = (page - 1) * itemsPerPage;
 
-        const whereCondition = includeRemoved ? undefined : eq(books.is_removed, false);
+        const whereCondition = includeRemoved
+            ? undefined
+            : eq(books.is_removed, false);
 
         const paginatedBooks = await db
             .select()
@@ -89,7 +92,9 @@ app.get(
             const page = req.query.page
                 ? parseInt(req.query.page as string, 10)
                 : 1;
-            const includeRemoved = req.query.is_removed === "true" || req.body?.is_removed === true;
+            const includeRemoved =
+                req.query.is_removed === "true" ||
+                req.body?.is_removed === true;
             const offset = (page - 1) * itemsPerPage;
 
             const searchTerm = req.params.search;

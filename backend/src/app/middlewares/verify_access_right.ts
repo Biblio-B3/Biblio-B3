@@ -10,14 +10,16 @@ export function grantedAccessMiddleware(
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             if (!req.payload?.user_id || !req.payload?.role) {
-                return next(new AppError("Unauthorized: No user ID in token.", 401));
+                return next(
+                    new AppError("Unauthorized: No user ID in token.", 401),
+                );
             }
 
             const tokenUserId = req.payload.user_id;
             const isAdmin = req.payload.role === "admin";
 
             // Cas où on accède aux données d'un utilisateur via /users/:id/*
-            if (req.params.id && req.route?.path?.includes('/users/:id')) {
+            if (req.params.id && req.route?.path?.includes("/users/:id")) {
                 const userIdParam = parseInt(req.params.id, 10);
                 if (isNaN(userIdParam) || userIdParam <= 0) {
                     return next(new AppError("Invalid user ID provided.", 400));
@@ -72,7 +74,10 @@ export function grantedAccessMiddleware(
             }
             if (!schema) {
                 return next(
-                    new AppError("Schema not provided for access verification.", 500),
+                    new AppError(
+                        "Schema not provided for access verification.",
+                        500,
+                    ),
                 );
             }
 
@@ -92,18 +97,26 @@ export function grantedAccessMiddleware(
 
             if (!resource || resource.length === 0 || !resource[0]) {
                 return next(
-                    new AppError(`Resource with ID ${resourceId} not found.`, 404, {
-                        id: resourceId,
-                    }),
+                    new AppError(
+                        `Resource with ID ${resourceId} not found.`,
+                        404,
+                        {
+                            id: resourceId,
+                        },
+                    ),
                 );
             }
 
             const isOwner = resource[0].user_id === tokenUserId;
             if (accessType === "owner" && !isOwner) {
-                return next(new AppError("Access denied.", 403, { id: resourceId }));
+                return next(
+                    new AppError("Access denied.", 403, { id: resourceId }),
+                );
             }
             if (accessType === "admin_or_owner" && !isOwner && !isAdmin) {
-                return next(new AppError("Access denied.", 403, { id: resourceId }));
+                return next(
+                    new AppError("Access denied.", 403, { id: resourceId }),
+                );
             }
 
             next();

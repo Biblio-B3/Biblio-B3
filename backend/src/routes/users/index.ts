@@ -6,3 +6,4 @@ import "./login";
 import "./logout";
 import "./reset-password";
 import "./reset-password-confirm";
+import "./change-default-credentials";

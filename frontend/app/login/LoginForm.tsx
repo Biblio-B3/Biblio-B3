@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authFetch } from "../utils/authFetch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const CheckUserId = (token: string) => {
   try {
@@ -29,6 +37,11 @@ export default function LoginForm() {
   const [showExpiredMessage, setShowExpiredMessage] = useState(false);
   const [showLoginError, setShowLoginError] = useState(false);
   const [loginErrorType, setLoginErrorType] = useState("");
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changePasswordError, setChangePasswordError] = useState("");
   const router = useRouter();
   const { toast } = useToast();
 
@@ -103,15 +116,19 @@ export default function LoginForm() {
           localStorage.setItem("userRole", "user");
         }
 
-        router.push("/books");
+        // Vérifier si un changement de mot de passe est requis
+        if (data.requiresPasswordChange) {
+          setShowPasswordChangeModal(true);
+        } else {
+          router.push("/books");
+          toast({
+            title: "Connexion réussie",
+            description: "Vous êtes maintenant connecté.",
+          });
+        }
       } catch (error: any) {
         setErrorMessage("Erreur lors de la récupération du rôle");
       }
-
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté.",
-      });
     } catch (error: any) {
       setShowLoginError(true);
       setLoginErrorType(error.message);
@@ -142,66 +159,155 @@ export default function LoginForm() {
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {showExpiredMessage && (
-        <Alert className="mb-4">
-          <AlertDescription>
-            Votre session a expiré. Veuillez vous reconnecter pour continuer.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {showLoginError && (
-        <Alert className="mb-4" variant="destructive">
-          <AlertDescription>
-            {loginErrorType === "missing_fields" && "Veuillez remplir tous les champs requis."}
-            {loginErrorType === "invalid_credentials" && "Email ou mot de passe incorrect. Veuillez vérifier vos informations."}
-            {loginErrorType === "server_error" && "Erreur serveur. Veuillez réessayer plus tard."}
-            {loginErrorType === "unknown_error" && "Une erreur inconnue est survenue. Veuillez réessayer."}
-            {!["missing_fields", "invalid_credentials", "server_error", "unknown_error"].includes(loginErrorType) && "Une erreur est survenue. Veuillez réessayer."}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <Label htmlFor="password">Mot de passe</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Connexion en cours..." : "Se connecter"}
-      </Button>
-      <div className="text-center mt-4">
-        <p className="text-sm text-muted-foreground">
-          Vous n'avez pas de compte ?{" "}
-          <Button
-            variant="link"
-            className="p-0 h-auto font-semibold"
-            onClick={() => {
-              router.push("/register");
-            }}
-          >
-            S'inscrire
-          </Button>
-        </p>
-      </div>
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      setChangePasswordError("Les mots de passe ne correspondent pas.");
+      return;
+    }
 
-    </form>
+    setLoading(true);
+    setChangePasswordError("");
+
+    try {
+      const response = await authFetch("/api/change-default-credentials", {
+        method: "POST",
+        body: JSON.stringify({
+          newEmail,
+          newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Échec de la mise à jour des identifiants");
+      }
+
+      toast({
+        title: "Identifiants mis à jour",
+        description: "Vos identifiants ont été changés avec succès.",
+      });
+      setShowPasswordChangeModal(false);
+      router.push("/books");
+    } catch (error: any) {
+      setChangePasswordError(error.message || "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {showExpiredMessage && (
+          <Alert className="mb-4">
+            <AlertDescription>
+              Votre session a expiré. Veuillez vous reconnecter pour continuer.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showLoginError && (
+          <Alert className="mb-4" variant="destructive">
+            <AlertDescription>
+              {loginErrorType === "missing_fields" && "Veuillez remplir tous les champs requis."}
+              {loginErrorType === "invalid_credentials" && "Email ou mot de passe incorrect. Veuillez vérifier vos informations."}
+              {loginErrorType === "server_error" && "Erreur serveur. Veuillez réessayer plus tard."}
+              {loginErrorType === "unknown_error" && "Une erreur inconnue est survenue. Veuillez réessayer."}
+              {!["missing_fields", "invalid_credentials", "server_error", "unknown_error"].includes(loginErrorType) && "Une erreur est survenue. Veuillez réessayer."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="password">Mot de passe</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Connexion en cours..." : "Se connecter"}
+        </Button>
+        <div className="text-center mt-4">
+          <p className="text-sm text-muted-foreground">
+            Vous n'avez pas de compte ?{" "}
+            <Button
+              variant="link"
+              className="p-0 h-auto font-semibold"
+              onClick={() => {
+                router.push("/register");
+              }}
+            >
+              S'inscrire
+            </Button>
+          </p>
+        </div>
+      </form>
+
+      <Dialog open={showPasswordChangeModal} onOpenChange={setShowPasswordChangeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Changer vos identifiants</DialogTitle>
+            <DialogDescription>
+              Pour des raisons de sécurité, vous devez changer votre email et mot de passe par défaut.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newEmail">Nouvel email</Label>
+              <Input
+                id="newEmail"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            {changePasswordError && (
+              <Alert variant="destructive">
+                <AlertDescription>{changePasswordError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handlePasswordChange} disabled={loading}>
+              {loading ? "Changement en cours..." : "Changer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

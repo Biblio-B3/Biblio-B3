@@ -66,13 +66,17 @@ app.get(
                 .orderBy(historical.date_read);
 
             const validatedHistorical = userHistorical.map((h) => {
-                const { book_title, user_first_name, user_last_name, ...rest } = h;
+                const { book_title, user_first_name, user_last_name, ...rest } =
+                    h;
 
                 const result = selectHistoricalSchema.safeParse(rest);
                 if (!result.success) {
                     console.error("Validation failed for:", rest);
                     console.error(result.error.format());
-                    throw new AppError("Invalid data in historical record.", 500);
+                    throw new AppError(
+                        "Invalid data in historical record.",
+                        500,
+                    );
                 }
 
                 return {
@@ -96,7 +100,9 @@ app.get(
                 return next(error);
             }
             next(
-                new Error("An error occurred while retrieving historical records."),
+                new Error(
+                    "An error occurred while retrieving historical records.",
+                ),
             );
         }
     },

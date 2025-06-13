@@ -1,7 +1,11 @@
 import { app } from "../..";
 import { db } from "../../app/config/database";
 import { eq, desc, sql } from "drizzle-orm";
-import { review, selectReviewSchema, selectReviewWithUserSchema } from "../../db/schema/review";
+import {
+    review,
+    selectReviewSchema,
+    selectReviewWithUserSchema,
+} from "../../db/schema/review";
 import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../../app/utils/AppError";
@@ -37,7 +41,7 @@ app.get(
                 });
                 return;
             }
-            
+
             res.status(200).json(allReviews);
         } catch (error) {
             if (error instanceof AppError) return next(error);
@@ -103,7 +107,7 @@ app.get(
 
             // Valider chaque review dans le schema zod avec les informations utilisateur
             const validatedReviews = paginatedReviews.map((r) =>
-                selectReviewWithUserSchema.parse(r)
+                selectReviewWithUserSchema.parse(r),
             );
 
             // Calculer le nombre total de reviews pour la pagination
@@ -141,9 +145,9 @@ app.get(
                 new AppError(
                     "Internal error during review retrieval",
                     500,
-                    error
-                )
+                    error,
+                ),
             );
         }
-    }
+    },
 );

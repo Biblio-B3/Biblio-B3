@@ -34,7 +34,19 @@ app.post("/login", async (req: Request, res: Response, next: NextFunction) => {
 
         const token = await generateToken(user.id, user.roles);
 
-        res.status(200).json({ message: "Login successful.", token: token });
+        // Vérifier si l'admin utilise les identifiants par défaut
+        const isDefaultAdmin =
+            user.email === "admin@example.com" &&
+            (await argon2Verify({
+                password: "adminpassword",
+                hash: user.password,
+            }));
+
+        res.status(200).json({
+            message: "Login successful.",
+            token: token,
+            requiresPasswordChange: isDefaultAdmin,
+        });
     } catch (error) {
         if (error instanceof AppError) return next(error);
         return next(

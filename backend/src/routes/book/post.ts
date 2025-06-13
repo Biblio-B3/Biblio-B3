@@ -35,7 +35,11 @@ async function fetchBookFromGoogleBooks(isbn: string): Promise<BookInfo> {
             `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`,
         );
 
-        if (response.data.totalItems === 0 || !response.data.items || response.data.items.length === 0) {
+        if (
+            response.data.totalItems === 0 ||
+            !response.data.items ||
+            response.data.items.length === 0
+        ) {
             throw new AppError("Book not found on Google Books.", 404);
         }
 
