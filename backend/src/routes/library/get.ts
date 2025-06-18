@@ -2,7 +2,6 @@ import { app } from "../..";
 import { library } from "../../db/schema/library";
 import { db } from "../../app/config/database";
 import { Request, Response, NextFunction } from "express";
-import { checkTokenMiddleware } from "../../app/middlewares/verify_jwt";
 import { AppError } from "../../app/utils/AppError";
 
 app.get("/library", async (req: Request, res: Response, next: NextFunction) => {
@@ -10,7 +9,9 @@ app.get("/library", async (req: Request, res: Response, next: NextFunction) => {
         const [result] = await db.select().from(library).limit(1);
 
         if (!result) {
-            next(new AppError("No library information found.", 404));
+            res.status(404).json({
+                message: "No library information found.",
+            });
         } else {
             res.status(200).json(result);
         }
