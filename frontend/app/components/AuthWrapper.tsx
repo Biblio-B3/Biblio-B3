@@ -133,15 +133,8 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // Pour /books ou les routes authentifiées autorisées, afficher avec sidebar
   return (
     <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar desktop */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
-      
-      {/* Navigation mobile */}
-      <MobileNav />
-      
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-8">{children}</main>
     </div>
   );
 }
