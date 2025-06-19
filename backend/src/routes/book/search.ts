@@ -177,7 +177,6 @@ app.get(
 
 app.get(
     "/books/categories",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const includeRemoved =
@@ -212,7 +211,6 @@ app.get(
 
 app.get(
     "/books/publishers",
-    checkTokenMiddleware,
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const includeRemoved =
@@ -247,7 +245,7 @@ app.get(
 
 app.get(
     "/books/authors",
-    checkTokenMiddleware,
+
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const includeRemoved =
