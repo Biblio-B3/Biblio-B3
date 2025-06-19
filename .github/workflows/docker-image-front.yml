@@ -43,15 +43,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-yarn-
 
-    - name: Install dependencies with retry (Yarn 4)
+    - name: Install dependencies
       working-directory: frontend
-      run: |
-        for i in 1 2 3; do
-          yarn install --frozen-lockfile && break || {
-            echo "Attempt $i failed... retrying in 10s";
-            sleep 10;
-          }
-        done
+      run: yarn install --frozen-lockfile
 
     - name: Generate version from commit count
       id: version
@@ -66,7 +60,7 @@ jobs:
     - name: Build Next.js front image
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm64 \
+          --platform linux/amd64 \
           --file frontend/Dockerfile \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:${{ env.TIMESTAMP }}-v${{ env.VERSION }} \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:latest \
