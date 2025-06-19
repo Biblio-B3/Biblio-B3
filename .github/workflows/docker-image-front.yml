@@ -10,10 +10,9 @@ on:
     paths:
       - 'frontend/**'
   workflow_dispatch:
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +27,32 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    - name: Cache Yarn
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/node_modules
+          ~/.yarn/cache
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install dependencies with retry
+      working-directory: frontend
+      run: |
+        for i in 1 2 3; do
+          yarn install && break || {
+            echo "Attempt $i failed... retrying in 10s";
+            sleep 10;
+          }
+        done
+
     - name: Generate version from commit count
       id: version
       run: |
         VERSION=$(git rev-list --count HEAD)
         echo "VERSION=1.${VERSION}" >> $GITHUB_ENV
+
     - name: Get the current timestamp
       id: timestamp
       run: echo "TIMESTAMP=$(date +'%Y%m%d%H')" >> $GITHUB_ENV
@@ -46,4 +66,3 @@ jobs:
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:latest \
           --push \
           frontend/
-
