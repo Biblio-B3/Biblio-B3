@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -268,30 +269,32 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
                 }}
               />
             </div>
-            {copyStates.map((copyState, index) => (
-              <div key={index} className="flex flex-col">
-                <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>
-                <Select
-                  value={copyStates[index]}
-                  onValueChange={(value) => {
-                    const newStates = [...copyStates];
-                    newStates[index] = value;
-                    setCopyStates(newStates);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un état" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">Neuf</SelectItem>
-                    <SelectItem value="good">Bon état</SelectItem>
-                    <SelectItem value="used">Usé</SelectItem>
-                    <SelectItem value="damaged">Endommagé</SelectItem>
-                    <SelectItem value="lost">Perdu</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
+            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+              {copyStates.map((copyState, index) => (
+                <div key={index} className="flex flex-col mb-4">
+                  <Label htmlFor={`copyState-${index}`}>État de la copie {index + 1}</Label>
+                  <Select
+                    value={copyStates[index]}
+                    onValueChange={(value) => {
+                      const newStates = [...copyStates];
+                      newStates[index] = value;
+                      setCopyStates(newStates);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un état" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">Neuf</SelectItem>
+                      <SelectItem value="good">Bon état</SelectItem>
+                      <SelectItem value="used">Usé</SelectItem>
+                      <SelectItem value="damaged">Endommagé</SelectItem>
+                      <SelectItem value="lost">Perdu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </ScrollArea>
             <div className="flex gap-2">
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Import en cours..." : "Importer via ISBN"}
@@ -311,7 +314,7 @@ export const AddBookDialog = ({ isOpen, onOpenChange }: AddBookDialogProps) => {
           </form>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto max-h-[60vh]">
+            <div className="flex-1 overflow-y-auto max-h-[50vh]">
               <form id="manual-form" onSubmit={handleManualSubmit} className="grid gap-4 py-4">
                 <div className="flex flex-col">
                   <Label htmlFor="title">Titre</Label>
