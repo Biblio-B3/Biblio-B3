@@ -1,4 +1,16 @@
+import { Metadata } from 'next'
 import ReservationsClient from "./ReservationsClient"
+
+export const metadata: Metadata = {
+  title: 'Gestion des réservations',
+  description: 'Gérez vos réservations de livres',
+  openGraph: {
+    title: 'Gestion des réservations',
+    description: 'Gérez vos réservations de livres',
+    url: '/reservations',
+    type: 'website'
+  }
+}
 
 export default function ReservationsPage() {
   return (

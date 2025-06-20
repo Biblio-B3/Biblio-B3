@@ -1,3 +1,16 @@
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Mon Profil',
+  description: 'Gérez votre profil utilisateur',
+  openGraph: {
+    title: 'Mon Profil',
+    description: 'Gérez votre profil utilisateur',
+    url: '/profile',
+    type: 'website'
+  }
+}
+
 import ProfileClient from "./ProfileClient"
 
 export default function ProfilePage() {
@@ -8,4 +21,3 @@ export default function ProfilePage() {
         </div>
     )
 }
-

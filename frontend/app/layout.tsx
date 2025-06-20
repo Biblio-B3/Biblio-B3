@@ -16,6 +16,11 @@ export default function RootLayout({
     return (
         <html lang="fr" suppressHydrationWarning>
             <head>
+                <title>Biblio - Gestion de bibliothèque</title>
+                <meta name="description" content="Application de gestion de bibliothèque avec suivi des prêts et réservations" />
+                <meta property="og:title" content="Biblio" />
+                <meta property="og:description" content="Application de gestion de bibliothèque" />
+                <meta property="og:type" content="website" />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `
