@@ -1,47 +1,74 @@
-// src/test/unit_email/test_email_unit.test.ts
-// Ajustez le chemin d’accès au service selon votre structure
-import { sendResetPasswordEmail } from "../../app/services/email";
-
-// 1. Pré-déclaration de la mock-var avec var pour éviter la TDZ
-var sendMailMock: jest.Mock;
-
-// 2. Mock de nodemailer
-jest.mock("nodemailer", () => {
-    sendMailMock = jest.fn().mockResolvedValue(true);
-    return {
-        createTransport: jest.fn(() => ({
-            sendMail: sendMailMock,
-        })),
-    };
-});
-
-// 3. Mock de la base de données sur le même chemin que l’import dans email.ts
-jest.mock("../../app/config/database", () => ({
-    db: {
-        select: jest.fn(() => ({
-            from: jest.fn(() => ({
-                where: jest.fn(() => ({
-                    limit: jest.fn(() =>
-                        Promise.resolve([
-                            { id: 1, email: "user@example.com" },
-                        ])
-                    ),
-                })),
-            })),
-        })),
-    },
-}));
-
 describe("sendResetPasswordEmail", () => {
+    let sendResetPasswordEmail: any;
+    let sendMailMock: jest.Mock;
+    let dbLimitMock: jest.Mock;
+
+    beforeAll(async () => {
+        // Reset modules pour s'assurer qu'aucun cache n'interfère
+        jest.resetModules();
+        
+        // Create mock functions
+        sendMailMock = jest.fn();
+        dbLimitMock = jest.fn();
+
+        // Mock nodemailer
+        jest.doMock("nodemailer", () => ({
+            createTransport: jest.fn(() => ({
+                sendMail: sendMailMock,
+            })),
+        }));
+
+        // Mock drizzle-orm
+        jest.doMock("drizzle-orm", () => ({
+            eq: jest.fn(() => ({ column: "id", value: 1 })),
+        }));
+
+        // Mock database
+        jest.doMock("../../app/config/database", () => ({
+            db: {
+                select: jest.fn(() => ({
+                    from: jest.fn(() => ({
+                        where: jest.fn(() => ({
+                            limit: dbLimitMock,
+                        })),
+                    })),
+                })),
+            },
+        }));
+
+        // Mock users schema
+        jest.doMock("../../db/schema/users", () => ({
+            users: { id: "mockUsersTable" },
+        }));
+
+        // Import after mocks
+        const emailModule = await import("../../app/services/email");
+        sendResetPasswordEmail = emailModule.sendResetPasswordEmail;
+    });
+
     beforeEach(() => {
-        sendMailMock.mockClear();
+        jest.clearAllMocks();
+        sendMailMock.mockResolvedValue(true);
+        
+        // Setup environment variables
         process.env.FRONTEND_URL = "https://frontend.test";
         process.env.SMTP_USER = "smtp@example.com";
         process.env.SMTP_PASS = "testpass";
-        // Si nécessaire, définissez SMTP_HOST/SMTP_PORT/SMTP_SECURE ici aussi
+        process.env.SMTP_HOST = "smtp.gmail.com";
+        process.env.SMTP_PORT = "587";
+        process.env.SMTP_SECURE = "false";
+        
+        // Setup default DB mock to return a user
+        dbLimitMock.mockResolvedValue([
+            { id: 1, email: "user@example.com" },
+        ]);
     });
 
-    it("envoie un email si l’utilisateur existe", async () => {
+    afterAll(() => {
+        jest.resetModules();
+    });
+
+    it("envoie un email si l'utilisateur existe", async () => {
         const result = await sendResetPasswordEmail(1, "fake-token");
         expect(result).toBe(true);
         expect(sendMailMock).toHaveBeenCalledWith(
@@ -55,10 +82,8 @@ describe("sendResetPasswordEmail", () => {
         );
     });
 
-    it("retourne false si aucun utilisateur n’est trouvé", async () => {
-        // On change le mock pour renvoyer [] au lieu de l’utilisateur
-        const dbModule = require("../../app/config/database");
-        (dbModule.db.select().from().where().limit as jest.Mock).mockResolvedValueOnce([]);
+    it("retourne false si aucun utilisateur n'est trouvé", async () => {
+        dbLimitMock.mockResolvedValueOnce([]);
         const result = await sendResetPasswordEmail(999, "token");
         expect(result).toBe(false);
         expect(sendMailMock).not.toHaveBeenCalled();
