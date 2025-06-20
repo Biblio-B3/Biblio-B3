@@ -13,7 +13,7 @@ export const extractBearerToken = (headerValue: string) => {
     return headerValue.trim();
 };
 
-async function isTokenRevoked(payload: JWTPayload) {
+export async function isTokenRevoked(payload: JWTPayload) {
     try {
         if (
             !payload ||
