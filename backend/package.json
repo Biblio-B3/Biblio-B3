@@ -66,6 +66,9 @@
             "node_modules",
             "src"
         ],
-        "rootDir": "src"
+        "rootDir": "src",
+        "setupFilesAfterEnv": [
+            "<rootDir>/test/setup.ts"
+        ]
     }
 }
