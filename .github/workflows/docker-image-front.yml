@@ -10,10 +10,9 @@ on:
     paths:
       - 'frontend/**'
   workflow_dispatch:
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -28,11 +27,32 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    - name: Enable Corepack and install Yarn 4.5.0
+      run: |
+        corepack enable
+        corepack prepare yarn@4.5.0 --activate
+        yarn --version
+
+    - name: Cache Yarn
+      uses: actions/cache@v3
+      with:
+        path: |
+          **/node_modules
+          ~/.yarn/cache
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - name: Install dependencies
+      working-directory: frontend
+      run: yarn install --frozen-lockfile
+
     - name: Generate version from commit count
       id: version
       run: |
         VERSION=$(git rev-list --count HEAD)
         echo "VERSION=1.${VERSION}" >> $GITHUB_ENV
+
     - name: Get the current timestamp
       id: timestamp
       run: echo "TIMESTAMP=$(date +'%Y%m%d%H')" >> $GITHUB_ENV
@@ -40,10 +60,9 @@ jobs:
     - name: Build Next.js front image
       run: |
         docker buildx build \
-          --platform linux/amd64,linux/arm64 \
+          --platform linux/amd64 \
           --file frontend/Dockerfile \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:${{ env.TIMESTAMP }}-v${{ env.VERSION }} \
           --tag ${{ secrets.DOCKER_USERNAME }}/react_app_b3:latest \
           --push \
           frontend/
-
