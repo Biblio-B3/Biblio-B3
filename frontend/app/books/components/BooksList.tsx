@@ -63,11 +63,8 @@ export const BooksList = () => {
           sortOrder: savedSortOrder,
         } = JSON.parse(savedState);
 
+        // Restaurer tous les états sauf searchTerm d'abord
         if (typeof page === "number") setCurrentPage(page);
-        if (typeof savedSearchTerm === "string") {
-          setSearchTerm(savedSearchTerm);
-          setDebouncedSearchTerm(savedSearchTerm);
-        }
         if (typeof showArchived === "boolean") setShowArchivedOnly(showArchived);
         if (typeof savedCategory === "string") setSelectedCategory(savedCategory);
         if (typeof savedAuthor === "string") setSelectedAuthor(savedAuthor);
@@ -78,6 +75,13 @@ export const BooksList = () => {
         if (savedSortOrder === "asc" || savedSortOrder === "desc") {
           setSortOrder(savedSortOrder);
         }
+
+        // Restaurer searchTerm en dernier pour éviter les conflits
+        if (typeof savedSearchTerm === "string") {
+          setDebouncedSearchTerm(savedSearchTerm);
+          setSearchTerm(savedSearchTerm);
+        }
+
         setPendingScrollRestore(scrollPosition);
       } catch (e) {
         console.error("Erreur lors de la restauration de l'état:", e);
@@ -213,6 +217,9 @@ export const BooksList = () => {
     if (searchParams.get("bookId")) return;
 
     const params = new URLSearchParams();
+    console.log("Fetching books with params:", {
+      title: debouncedSearchTerm,
+    });
     if (debouncedSearchTerm.trim()) {
       params.append("title", debouncedSearchTerm.trim());
     }
@@ -320,6 +327,7 @@ export const BooksList = () => {
         {/* Barre de recherche et filtres */}
         <BooksFilters
           setSearchTerm={setSearchTerm}
+          searchTerm={searchTerm}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           selectedAuthor={selectedAuthor}
