@@ -4,8 +4,10 @@ import { logMessage, errorMessage } from "../utils/logger";
 import dotenv from "dotenv";
 import "dotenv/config";
 import { NODE_ENV } from "../..";
+import { Pool } from "pg";
 
 export let db: ReturnType<typeof drizzle>;
+export let pool: Pool;
 
 export async function startDatabase() {
     let DATABASE_URL;
@@ -30,7 +32,8 @@ export async function startDatabase() {
 
         while (!connected && attempts < maxAttempts) {
             try {
-                db = drizzle(DATABASE_URL);
+                pool = new Pool({ connectionString: DATABASE_URL });
+                db = drizzle(pool);
                 await db.execute("select 1");
                 connected = true;
                 logMessage("Connected to the database.");
@@ -50,7 +53,8 @@ export async function startDatabase() {
             }
         }
     } else {
-        db = drizzle(DATABASE_URL);
+        pool = new Pool({ connectionString: DATABASE_URL });
+        db = drizzle(pool);
         try {
             await db.execute("select 1");
             logMessage("Connected to the database.");
