@@ -98,36 +98,16 @@ export default function LoginForm() {
       }
 
       localStorage.setItem("auth_token", data.token);
-      const id = CheckUserId(data.token);
 
-      try {
-        const ResUserRole = await authFetch(`/api/roles/${id}`);
-
-        let dataUserRole;
-        try {
-          dataUserRole = await ResUserRole.json();
-        } catch (err) {
-          throw new Error("Réponse invalide du serveur.");
-        }
-
-        if (dataUserRole.roles === "admin") {
-          localStorage.setItem("userRole", "admin");
-        } else {
-          localStorage.setItem("userRole", "user");
-        }
-
-        // Vérifier si un changement de mot de passe est requis
-        if (data.requiresPasswordChange) {
-          setShowPasswordChangeModal(true);
-        } else {
-          router.push("/books");
-          toast({
-            title: "Connexion réussie",
-            description: "Vous êtes maintenant connecté.",
-          });
-        }
-      } catch (error: any) {
-        setErrorMessage("Erreur lors de la récupération du rôle");
+      // Vérifier si un changement de mot de passe est requis
+      if (data.requiresPasswordChange) {
+        setShowPasswordChangeModal(true);
+      } else {
+        window.location.href = "/books";
+        toast({
+          title: "Connexion réussie",
+          description: "Vous êtes maintenant connecté.",
+        });
       }
     } catch (error: any) {
       setShowLoginError(true);
