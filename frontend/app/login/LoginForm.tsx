@@ -99,15 +99,34 @@ export default function LoginForm() {
 
       localStorage.setItem("auth_token", data.token);
 
-      // Vérifier si un changement de mot de passe est requis
-      if (data.requiresPasswordChange) {
-        setShowPasswordChangeModal(true);
-      } else {
-        window.location.href = "/books";
-        toast({
-          title: "Connexion réussie",
-          description: "Vous êtes maintenant connecté.",
-        });
+      try {
+        // Décoder le token pour extraire le rôle, sans appel réseau
+        const payload = data.token.split('.')[1];
+        const decodedPayload = window.atob(payload);
+        const userRole = JSON.parse(decodedPayload).role;
+
+        if (userRole) {
+            localStorage.setItem("userRole", userRole);
+        } else {
+            // Sécurité : si le rôle est absent, on utilise 'user' par défaut
+            localStorage.setItem("userRole", "user");
+            console.error("Le rôle est absent du token JWT, utilisation du rôle 'user' par défaut.");
+        }
+
+        // Vérifier si un changement de mot de passe est requis
+        if (data.requiresPasswordChange) {
+          setShowPasswordChangeModal(true);
+        } else {
+          router.push("/books");
+          toast({
+            title: "Connexion réussie",
+            description: "Vous êtes maintenant connecté.",
+          });
+        }
+      } catch (error) {
+          console.error("Erreur lors du décodage du token pour le rôle :", error);
+          setShowLoginError(true);
+          setLoginErrorType("unknown_error");
       }
     } catch (error: any) {
       setShowLoginError(true);
