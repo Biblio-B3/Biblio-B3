@@ -98,22 +98,19 @@ export default function LoginForm() {
       }
 
       localStorage.setItem("auth_token", data.token);
-      const id = CheckUserId(data.token);
 
       try {
-        const ResUserRole = await authFetch(`/api/roles/${id}`);
+        // Décoder le token pour extraire le rôle, sans appel réseau
+        const payload = data.token.split('.')[1];
+        const decodedPayload = window.atob(payload);
+        const userRole = JSON.parse(decodedPayload).role;
 
-        let dataUserRole;
-        try {
-          dataUserRole = await ResUserRole.json();
-        } catch (err) {
-          throw new Error("Réponse invalide du serveur.");
-        }
-
-        if (dataUserRole.roles === "admin") {
-          localStorage.setItem("userRole", "admin");
+        if (userRole) {
+            localStorage.setItem("userRole", userRole);
         } else {
-          localStorage.setItem("userRole", "user");
+            // Sécurité : si le rôle est absent, on utilise 'user' par défaut
+            localStorage.setItem("userRole", "user");
+            console.error("Le rôle est absent du token JWT, utilisation du rôle 'user' par défaut.");
         }
 
         // Vérifier si un changement de mot de passe est requis
@@ -126,8 +123,10 @@ export default function LoginForm() {
             description: "Vous êtes maintenant connecté.",
           });
         }
-      } catch (error: any) {
-        setErrorMessage("Erreur lors de la récupération du rôle");
+      } catch (error) {
+          console.error("Erreur lors du décodage du token pour le rôle :", error);
+          setShowLoginError(true);
+          setLoginErrorType("unknown_error");
       }
     } catch (error: any) {
       setShowLoginError(true);

@@ -10,16 +10,17 @@ const AUTH_ERRORS = ["Relogin is required", "Invalid Compact JWS", "\"exp\" clai
  */
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true;
-  
+
   try {
-    // Décoder le JWT (partie payload)
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentTime = Math.floor(Date.now() / 1000);
-    
-    // Vérifier si le token a expiré
-    return payload.exp < currentTime;
+    const expiryTime = payload.exp;
+    const clockSkew = 60; // Tolérance de 60 secondes pour le décalage d'horloge
+
+    // Le token est considéré comme expiré seulement si sa date d'expiration
+    // est antérieure à l'heure actuelle MOINS la marge de tolérance.
+    return expiryTime < (currentTime - clockSkew);
   } catch (error) {
-    // Si on ne peut pas décoder le token, on considère qu'il est expiré
     return true;
   }
 }

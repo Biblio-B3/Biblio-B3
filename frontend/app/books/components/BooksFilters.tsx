@@ -15,6 +15,7 @@ import { Plus, Archive } from "lucide-react";
 
 interface BooksFiltersProps {
   setSearchTerm: (term: string) => void;
+  searchTerm: string;
   selectedCategory: string;
   setSelectedCategory: (value: string) => void;
   selectedAuthor: string;
@@ -37,6 +38,7 @@ interface BooksFiltersProps {
 
 export const BooksFilters = ({
   setSearchTerm,
+  searchTerm,
   selectedCategory,
   setSelectedCategory,
   selectedAuthor,
@@ -59,7 +61,7 @@ export const BooksFilters = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="w-full">
-        <SearchBar onSearch={setSearchTerm} />
+        <SearchBar onSearch={setSearchTerm} initialValue={searchTerm} />
       </div>
       
       {/* Filtres desktop - version originale */}

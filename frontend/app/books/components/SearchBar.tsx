@@ -2,14 +2,17 @@ import { useState, useEffect } from "react"
 
 interface SearchBarProps {
     onSearch: (searchTerm: string) => void;
+    initialValue?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-    const [inputValue, setInputValue] = useState("");
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialValue = "" }) => {
+    const [inputValue, setInputValue] = useState(initialValue);
 
     useEffect(() => {
-        onSearch(inputValue);
-    }, [inputValue, onSearch]);
+        if (inputValue !== "" || initialValue !== "") {
+            onSearch(inputValue);
+        }
+    }, [inputValue, onSearch, initialValue]);
 
     return (
         <input

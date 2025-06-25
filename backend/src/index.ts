@@ -32,28 +32,31 @@ if (NODE_ENV === "development") {
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
+export async function init() {
+    await import("./routes/users/index");
+    await import("./routes/book/index");
+    await import("./routes/copy/index");
+    await import("./routes/historical/index");
+    await import("./routes/reservation/index");
+    await import("./routes/review/index");
+    await import("./routes/library/index");
+    await import("./routes/stats/index");
+
+    app.use((req, res) => {
+        res.status(404).json({
+            error: "This resource does not exist.",
+            req: req.originalUrl,
+        });
+    });
+
+    app.use(errorHandler);
+}
+
 async function startServer() {
     try {
         await startDatabase();
         await createAdmin();
-
-        await import("./routes/users/index");
-        await import("./routes/book/index");
-        await import("./routes/copy/index");
-        await import("./routes/historical/index");
-        await import("./routes/reservation/index");
-        await import("./routes/review/index");
-        await import("./routes/library/index");
-        await import("./routes/stats/index");
-
-        app.use((req, res) => {
-            res.status(404).json({
-                error: "This resource does not exist.",
-                req: req.originalUrl,
-            });
-        });
-
-        app.use(errorHandler);
+        await init();
 
         app.listen(port, "0.0.0.0", () => {
             logMessage(`Server is running on http://localhost:${port}`);

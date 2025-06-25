@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer";
+import { db } from "../config/database";
+import { users } from "../../db/schema/users";
+import { eq } from "drizzle-orm";
 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -14,6 +17,11 @@ export async function sendResetPasswordEmail(
     userId: number,
     resetToken: string,
 ) {
+    // Vérifier la configuration SMTP
+    if (!process.env.FRONTEND_URL || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        throw new Error("Configuration SMTP manquante");
+    }
+
     const user = await db
         .select()
         .from(users)
@@ -133,10 +141,6 @@ export async function sendExpiringReservationReminder(
         throw error;
     }
 }
-import { db } from "../config/database";
-import { users } from "../../db/schema/users";
-import { eq } from "drizzle-orm";
-
 export async function sendExpiredReservationEmail(
     userId: number,
     bookId: number,
