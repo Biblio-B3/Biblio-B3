@@ -15,9 +15,11 @@ export function isTokenExpired(token: string | null): boolean {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentTime = Math.floor(Date.now() / 1000);
     const expiryTime = payload.exp;
-    const clockSkew = 60; // 60 seconds tolerance
+    const clockSkew = 60; // Tolérance de 60 secondes pour le décalage d'horloge
 
-    return expiryTime < (currentTime + clockSkew);
+    // Le token est considéré comme expiré seulement si sa date d'expiration
+    // est antérieure à l'heure actuelle MOINS la marge de tolérance.
+    return expiryTime < (currentTime - clockSkew);
   } catch (error) {
     return true;
   }
