@@ -9,10 +9,7 @@ const AUTH_ERRORS = ["Relogin is required", "Invalid Compact JWS", "\"exp\" clai
  * Vérifie si le token JWT est expiré
  */
 export function isTokenExpired(token: string | null): boolean {
-  if (!token) {
-    console.log("[TOKEN CHECK] No token provided.");
-    return true;
-  }
+  if (!token) return true;
 
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -20,17 +17,8 @@ export function isTokenExpired(token: string | null): boolean {
     const expiryTime = payload.exp;
     const clockSkew = 60; // 60 seconds tolerance
 
-    console.log(`[TOKEN CHECK] Server token expiry time (exp): ${expiryTime}`);
-    console.log(`[TOKEN CHECK] Client current time: ${currentTime}`);
-    console.log(`[TOKEN CHECK] Clock skew tolerance: ${clockSkew} seconds`);
-    console.log(`[TOKEN CHECK] Time difference (client - server exp): ${currentTime - expiryTime} seconds`);
-
-    const isExpired = expiryTime < (currentTime + clockSkew);
-    console.log(`[TOKEN CHECK] Is token expired? ${isExpired}`);
-
-    return isExpired;
+    return expiryTime < (currentTime + clockSkew);
   } catch (error) {
-    console.error("[TOKEN CHECK] Failed to decode token:", error);
     return true;
   }
 }

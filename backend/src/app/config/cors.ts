@@ -5,7 +5,7 @@ export const corsOptions: cors.CorsOptions = {
         if (process.env.NODE_ENV === "development") {
             callback(null, true);
         } else {
-            const allowedOrigins = process.env.FRONTEND_URL?.split(",") || [];
+            const allowedOrigins = ["https://biblio.ecole-89.online"];
 
             if (!origin || allowedOrigins.includes(origin)) {
                 callback(null, true);
