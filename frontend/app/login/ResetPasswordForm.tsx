@@ -37,7 +37,7 @@ export default function ResetPasswordForm() {
             })
 
         } catch (error: any) {
-            console.error("⚠️ Erreur lors de la réinitialisation du mot de passe :", error)
+            console.error(" Erreur lors de la réinitialisation du mot de passe :", error)
             setMessage({
                 text: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
                 type: "error"

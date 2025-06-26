@@ -27,7 +27,7 @@ export default function RegisterForm() {
       const userId = JSON.parse(decodedPayload).user_id
       return userId
     } catch (error) {
-      console.error("⚠️ Erreur lors de la vérification de l'ID utilisateur :", error)
+      console.error("Erreur lors de la vérification de l'ID utilisateur :", error)
       return error
     }
   }
@@ -60,7 +60,7 @@ export default function RegisterForm() {
       }
 
       if (!response.ok) {
-        throw new Error(data.message || `Erreur ${response.status}: ${response.statusText}`)
+        throw new Error(JSON.stringify(data))
       }
 
       if (data.token) {
@@ -78,16 +78,14 @@ export default function RegisterForm() {
         router.push("/")
       }, 2000)
     } catch (error: any) {
-      console.error("⚠️ Erreur d'inscription :", error.message)
+      console.error(" Erreur d'inscription :", error.message)
 
       let errorMessage = "Une erreur inconnue est survenue."
       
       try {
-        // Essayer de parser la réponse d'erreur JSON
         const errorData = JSON.parse(error.message)
         
         if (errorData.details && errorData.details.issues && errorData.details.issues.length > 0) {
-          // Traiter les erreurs de validation Zod
           const issues = errorData.details.issues
           const translatedErrors = issues.map((issue: any) => {
             const field = issue.path?.[0] || "champ"
@@ -118,10 +116,12 @@ export default function RegisterForm() {
           
           errorMessage = translatedErrors.join(" ")
         } else if (errorData.message) {
-          // Traduire les messages d'erreur courants du backend
           switch (errorData.message) {
             case "Error during registarion.":
               errorMessage = "Erreur lors de l'inscription."
+              break
+            case "This email is already in use.":
+              errorMessage = "Cette adresse email est déjà utilisée."
               break
             case "User already exists":
               errorMessage = "Un compte avec cette adresse email existe déjà."
@@ -137,7 +137,6 @@ export default function RegisterForm() {
           }
         }
       } catch {
-        // Si ce n'est pas du JSON, utiliser le message tel quel
         errorMessage = error.message || "Une erreur inconnue est survenue."
       }
 
