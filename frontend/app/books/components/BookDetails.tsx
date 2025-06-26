@@ -283,6 +283,8 @@ export const BookDetails = ({ bookId }: BookDetailsProps) => {
               <p className="text-sm text-muted-foreground mb-1">Date de publication: {formatDate(book.publish_date)}</p>
               <p className="text-sm text-muted-foreground mb-1">Catégorie: {book.category}</p>
               <p className="text-sm text-muted-foreground mb-1">Type: {book.printType}</p>
+              <p className="text-sm text-muted-foreground mb-1">Langue: {book.language}</p>
+              <p className="text-sm text-muted-foreground mb-1">Nombre de pages: {book.pageCount || "N/A"}</p>
             </div>
           </div>
           <div className="mt-4">
