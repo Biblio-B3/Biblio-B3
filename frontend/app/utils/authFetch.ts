@@ -79,7 +79,7 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
   const headers = {
     "Content-Type": "application/json",
     ...options.headers,
-    ...(token ? { auth_token: token } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   // Effectuer la requête
@@ -139,7 +139,7 @@ export const useAuthFetch = () => {
     const headers = {
       "Content-Type": "application/json",
       ...options.headers,
-      ...(token ? { auth_token: token } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     // Effectuer la requête
