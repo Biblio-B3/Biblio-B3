@@ -57,7 +57,12 @@ export async function checkTokenMiddleware(
     next: NextFunction,
 ) {
     try {
-        const authToken = req.headers["auth_token"];
+        let authToken = req.headers["authorization"] || req.headers["auth_token"];
+        
+        // Si c'est un header Authorization, extraire le token après "Bearer "
+        if (authToken && typeof authToken === "string" && authToken.startsWith("Bearer ")) {
+            authToken = authToken.substring(7);
+        }
         if (
             !authToken ||
             typeof authToken !== "string" ||
