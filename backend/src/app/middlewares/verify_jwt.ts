@@ -57,7 +57,7 @@ export async function checkTokenMiddleware(
     next: NextFunction,
 ) {
     try {
-        const authToken = req.headers["auth_token"];
+        const authToken = req.headers["Auth_token"];
         if (
             !authToken ||
             typeof authToken !== "string" ||
