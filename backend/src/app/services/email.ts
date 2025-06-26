@@ -13,6 +13,10 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+const baseUrl = process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:4000' 
+    : process.env.FRONTEND_URL?.split(',').find(url => url.includes('https://')) || process.env.FRONTEND_URL;
+
 export async function sendResetPasswordEmail(
     userId: number,
     resetToken: string,
@@ -33,7 +37,7 @@ export async function sendResetPasswordEmail(
     }
 
     const userEmail = user[0].email;
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
         from: process.env.SMTP_USER,
@@ -84,7 +88,7 @@ export async function sendUnclaimedReservationReminder(
             <p>Vous avez une réservation non récupérée pour le livre "${bookTitle}". Il vous reste 1 jour pour la récupérer.</p>
             <p>Si vous ne la récupérez pas dans les 24 heures, elle sera annulée.</p>
             <p>Consultez vos réservations :
-                <a href="${process.env.FRONTEND_URL}/reservations-history">${process.env.FRONTEND_URL}/reservations-history</a>
+                <a href="${baseUrl}/reservations-history">${baseUrl}/reservations-history</a>
             </p>
         `,
     };
@@ -125,7 +129,7 @@ export async function sendExpiringReservationReminder(
             <p>Vous avez une réservation pour le livre "${bookTitle}" qui expire le ${finalDate.toLocaleDateString("fr-FR")}.</p>
             <p>Merci de la récupérer avant cette date.</p>
             <p>Consultez vos réservations :
-                <a href="${process.env.FRONTEND_URL}/reservations-history">${process.env.FRONTEND_URL}/reservations-history</a>
+                <a href="${baseUrl}/reservations-history">${baseUrl}/reservations-history</a>
             </p>
         `,
     };
@@ -168,7 +172,7 @@ export async function sendExpiredReservationEmail(
             <p>Nous vous informons que votre réservation pour le livre "${bookTitle}" a expiré car elle n'a pas été récupérée à temps.</p>
             <p>Vous pouvez effectuer une nouvelle réservation si le livre est disponible.</p>
             <p>Pour accéder à la page du livre, cliquez sur le lien :
-                <a href="${process.env.FRONTEND_URL}/books?bookId=${bookId}">${bookTitle}</a>
+                <a href="${baseUrl}/books?bookId=${bookId}">${bookTitle}</a>
             </p>
         `,
     };
@@ -218,7 +222,7 @@ export async function sendReservationConfirmation(
         minute: "2-digit"
     })} pour récupérer votre livre (dans les 48h).</p>
             <p>Vous pouvez consulter vos réservations à tout moment sur :
-                <a href="${process.env.FRONTEND_URL}/reservations">${process.env.FRONTEND_URL}/reservations</a>
+                <a href="${baseUrl}/reservations">${baseUrl}/reservations</a>
             </p>
         `,
     };
