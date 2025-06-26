@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getLocalStorageItem } from "@/app/utils/isClient";
 import { CheckUserId } from "@/app/login/LoginForm";
 import { authFetch } from "@/app/utils/authFetch";
@@ -20,9 +20,10 @@ export default function SettingsPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const [hasFetchedUser, setHasFetchedUser] = useState(false);
     const [updateStatus, setUpdateStatus] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [resetPasswordStatus, setResetPasswordStatus] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [logoutStatus, setLogoutStatus] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [mounted, setMounted] = useState(false);
 
-    const { toast } = useToast();
     const { theme, setTheme } = useTheme();
 
     useEffect(() => {
@@ -58,14 +59,10 @@ export default function SettingsPage() {
                     setHasFetchedUser(true);
                 }
             } catch {
-                toast({
-                    title: "Erreur",
-                    description: "Impossible de charger les informations utilisateur.",
-                    variant: "destructive",
-                });
+                console.error("Impossible de charger les informations utilisateur.");
             }
         })();
-    }, [userId, authFetch, toast, hasFetchedUser]);
+    }, [userId, authFetch, hasFetchedUser]);
 
     const handleEmailChange = useCallback(
         async (checked: boolean) => {
@@ -81,12 +78,12 @@ export default function SettingsPage() {
                 });
                 if (!res.ok) throw new Error();
                 setEmailNotifications(checked);
-                toast({ title: "Mise à jour", description: "Préférence email mise à jour." });
+                // Pas de notification pour ce changement
             } catch {
-                toast({ title: "Erreur", description: "Échec de la mise à jour.", variant: "destructive" });
+                console.error("Échec de la mise à jour.");
             }
         },
-        [userId, authFetch, toast]
+        [userId, authFetch]
     );
 
     const handleDarkChange = useCallback((checked: boolean) => {
@@ -101,11 +98,11 @@ export default function SettingsPage() {
                 body: JSON.stringify({ resetPassword: true }),
             });
             if (!res.ok) throw new Error();
-            toast({ title: "Email envoyé", description: "Réinitialisation demandée." });
+            setResetPasswordStatus({ message: "Email de réinitialisation envoyé avec succès.", type: "success" });
         } catch {
-            toast({ title: "Erreur", description: "Impossible d'envoyer l'email.", variant: "destructive" });
+            setResetPasswordStatus({ message: "Impossible d'envoyer l'email de réinitialisation.", type: "error" });
         }
-    }, [userId, toast]);
+    }, [userId]);
 
     const handleLogoutAll = useCallback(async () => {
         if (!userId) return;
@@ -117,11 +114,11 @@ export default function SettingsPage() {
                 },
             });
             if (!res.ok) throw new Error();
-            toast({ title: "Déconnecté", description: "Tous les appareils ont été déconnectés." });
+            setLogoutStatus({ message: "Tous les appareils ont été déconnectés avec succès.", type: "success" });
         } catch {
-            toast({ title: "Erreur", description: "Échec de la déconnexion.", variant: "destructive" });
+            setLogoutStatus({ message: "Échec de la déconnexion de tous les appareils.", type: "error" });
         }
-    }, [userId, authFetch, toast]);
+    }, [userId, authFetch]);
 
     const handleSaveProfile = async () => {
         if (!userId) return;
@@ -185,10 +182,20 @@ export default function SettingsPage() {
                 )}
             </div>
 
+            {resetPasswordStatus && (
+                <Alert className="mb-4" variant={resetPasswordStatus.type === "error" ? "destructive" : "default"}>
+                    <AlertDescription>{resetPasswordStatus.message}</AlertDescription>
+                </Alert>
+            )}
             <Button className="w-full" onClick={handleResetPassword} variant="secondary">
                 Réinitialiser le mot de passe
             </Button>
 
+            {logoutStatus && (
+                <Alert className="mb-4" variant={logoutStatus.type === "error" ? "destructive" : "default"}>
+                    <AlertDescription>{logoutStatus.message}</AlertDescription>
+                </Alert>
+            )}
             <Button className="w-full" onClick={handleLogoutAll} variant="destructive">
                 Déconnecter tous les appareils
             </Button>

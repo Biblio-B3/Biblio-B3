@@ -4,17 +4,19 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function ResetPasswordForm() {
     const [email, setEmail] = useState("")
     const [loading, setLoading] = useState(false)
-    const { toast } = useToast()
+    const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
+        setMessage(null)
+        
         try {
             const response = await fetch("/api/reset-password", {
                 method: "POST",
@@ -29,17 +31,16 @@ export default function ResetPasswordForm() {
                 throw new Error(errorData.message || "Échec de la réinitialisation du mot de passe")
             }
 
-            toast({
-                title: "Email envoyé",
-                description: "Si votre email est dans notre base de données, un email de réinitialisation a été envoyé.",
+            setMessage({
+                text: "Si votre email est dans notre base de données, un email de réinitialisation a été envoyé.",
+                type: "success"
             })
 
         } catch (error: any) {
             console.error("⚠️ Erreur lors de la réinitialisation du mot de passe :", error)
-            toast({
-                title: "Erreur",
-                description: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
-                variant: "destructive",
+            setMessage({
+                text: error.message || "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+                type: "error"
             })
         } finally {
             setLoading(false)
@@ -48,6 +49,11 @@ export default function ResetPasswordForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {message && (
+                <Alert className="mb-4" variant={message.type === "error" ? "destructive" : "default"}>
+                    <AlertDescription>{message.text}</AlertDescription>
+                </Alert>
+            )}
             <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
