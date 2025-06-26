@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function RegisterForm() {
   const [firstName, setFirstName] = useState("")
@@ -17,9 +17,8 @@ export default function RegisterForm() {
   const [password, setPassword] = useState("")
   const [bio, setBio] = useState("")
   const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
   const router = useRouter()
-  const { toast } = useToast()
 
   const CheckUserId = (token: string) => {
     try {
@@ -36,7 +35,7 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setErrorMessage("")
+    setMessage(null)
 
     try {
       const response = await fetch("/api/registration", {
@@ -70,21 +69,81 @@ export default function RegisterForm() {
         localStorage.setItem("userRole", "user")
       }
 
-      toast({
-        title: "Inscription réussie",
-        description: "Votre compte a été créé avec succès.",
+      setMessage({
+        text: "Votre compte a été créé avec succès. Redirection...",
+        type: "success"
       })
 
-      router.push("/")
+      setTimeout(() => {
+        router.push("/")
+      }, 2000)
     } catch (error: any) {
       console.error("⚠️ Erreur d'inscription :", error.message)
 
-      setErrorMessage(error.message)
+      let errorMessage = "Une erreur inconnue est survenue."
+      
+      try {
+        // Essayer de parser la réponse d'erreur JSON
+        const errorData = JSON.parse(error.message)
+        
+        if (errorData.details && errorData.details.issues && errorData.details.issues.length > 0) {
+          // Traiter les erreurs de validation Zod
+          const issues = errorData.details.issues
+          const translatedErrors = issues.map((issue: any) => {
+            const field = issue.path?.[0] || "champ"
+            
+            switch (issue.code) {
+              case "too_small":
+                if (field === "password") {
+                  return `Le mot de passe doit contenir au moins ${issue.minimum} caractères.`
+                }
+                return `Le ${field} doit contenir au moins ${issue.minimum} caractères.`
+              
+              case "invalid_string":
+                if (issue.validation === "email") {
+                  return "L'adresse email n'est pas valide."
+                }
+                return `Le format du ${field} n'est pas valide.`
+              
+              case "too_big":
+                return `Le ${field} ne peut pas dépasser ${issue.maximum} caractères.`
+              
+              case "invalid_type":
+                return `Le ${field} est requis.`
+              
+              default:
+                return issue.message || `Erreur de validation pour ${field}.`
+            }
+          })
+          
+          errorMessage = translatedErrors.join(" ")
+        } else if (errorData.message) {
+          // Traduire les messages d'erreur courants du backend
+          switch (errorData.message) {
+            case "Error during registarion.":
+              errorMessage = "Erreur lors de l'inscription."
+              break
+            case "User already exists":
+              errorMessage = "Un compte avec cette adresse email existe déjà."
+              break
+            case "Invalid email format":
+              errorMessage = "L'adresse email n'est pas valide."
+              break
+            case "Password too weak":
+              errorMessage = "Le mot de passe n'est pas assez fort."
+              break
+            default:
+              errorMessage = errorData.message
+          }
+        }
+      } catch {
+        // Si ce n'est pas du JSON, utiliser le message tel quel
+        errorMessage = error.message || "Une erreur inconnue est survenue."
+      }
 
-      toast({
-        title: "Erreur d'inscription",
-        description: error.message || "Une erreur inconnue est survenue.",
-        variant: "destructive",
+      setMessage({
+        text: errorMessage,
+        type: "error"
       })
     } finally {
       setLoading(false)
@@ -93,6 +152,11 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {message && (
+        <Alert className="mb-4" variant={message.type === "error" ? "destructive" : "default"}>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="firstName">Prénom</Label>
@@ -118,8 +182,6 @@ export default function RegisterForm() {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Inscription en cours..." : "S'inscrire"}
       </Button>
-
-      {errorMessage && <p className="text-red-500 text-sm mt-2 text-center">{errorMessage}</p>}
     </form>
   )
 }
