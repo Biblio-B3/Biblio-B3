@@ -57,7 +57,9 @@ export async function checkTokenMiddleware(
     next: NextFunction,
 ) {
     try {
-        const authToken = req.headers["Auth_token"];
+        console.log("Headers received:", JSON.stringify(req.headers, null, 2));
+        const authToken = req.headers["auth_token"];
+        console.log("auth_token extracted:", authToken);
         if (
             !authToken ||
             typeof authToken !== "string" ||
