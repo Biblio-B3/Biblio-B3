@@ -13,12 +13,6 @@ app.post(
         try {
             const { newEmail, newPassword } = req.body;
             
-            console.log("Données reçues dans change-default-credentials:", {
-                newEmail: newEmail ? "présent" : "manquant",
-                newPassword: newPassword ? "présent" : "manquant",
-                body: req.body
-            });
-            
             if (!newEmail || !newPassword) {
                 throw new AppError("Email et mot de passe requis.", 400);
             }
