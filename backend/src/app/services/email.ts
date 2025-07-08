@@ -222,7 +222,7 @@ export async function sendReservationConfirmation(
         minute: "2-digit"
     })} pour récupérer votre livre (dans les 48h).</p>
             <p>Vous pouvez consulter vos réservations à tout moment sur :
-                <a href="${baseUrl}/reservations">${baseUrl}/reservations</a>
+                <a href="${baseUrl}/reservations">${baseUrl}/reservations-history</a>
             </p>
         `,
     };
